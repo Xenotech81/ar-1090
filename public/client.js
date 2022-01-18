@@ -74,7 +74,7 @@ function groupBy(objectArray, property) {
 
 
 export function parseAircraftJson(now, json) {
-    // Create clean id string
+    // Create a clean id string, as it will be used as DOM element id
     const id_ = json.hex.startsWith("~") ? json.hex.substring(2) : json.hex
     const id = `id_${id_}`
 
@@ -88,7 +88,7 @@ export function parseAircraftJson(now, json) {
     const onGround = altitudeM === 0 ? true : false;
 
     // True, if positional data is complete (for plotting)
-    const positionKnown = hex && lon && lat && (typeof altitudeM === "number") ? true : false;
+    const positionKnown = lon && lat && (typeof altitudeM === "number") ? true : false;
 
     return { 'id': id, 'positionKnown': positionKnown, 'positionTimestamp': positionTimestamp, 'hex': hex, 'callsign': callsign, 'lon': lon, 'lat': lat, 'altitudeFt': altitudeFt, 'altitudeM': altitudeM, 'onGround': onGround }
 }
