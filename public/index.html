@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>AR-1090</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.3/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    <script
+        src="https://unpkg.com/aframe-environment-component@1.2.0/dist/aframe-environment-component.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script
+        src="https://raw.githack.com/andreasplesch/aframe-meshline-component/master/dist/aframe-meshline-component.min.js"></script>
+    <link rel="stylesheet" href="index.css">
+    <script src="./libs/gps-projected-entity-place.js" defer></script>
+    <script src="./script.js" type="module" defer></script>
+</head>
+
+<body style='margin: 0; overflow: hidden;'>
+
+    <div class="info-fields">
+        <div id="position" class="info-field">TEST</div>
+        <div id="doeSupported" class="info-field">DOE supported?</div>
+        <div id="orientation" class="info-field">Orientation</div>
+    </div>
+    <!--videoTexture: true; gpsMinDistance: 10;-->
+
+    <!-- <a-scene vr-mode-ui='enabled: false' embedded
+        arjs='sourceType: webcam; videoTexture: false; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;'>
+        -->
+    <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'>
+
+        <a-text id="text-0m" value="Altitude 0" scale="120 120 120"
+            gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 0 0"></a-text>
+
+        <a-text value="Altitude 10" scale="120 120 120"
+            gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 10 0"></a-text>
+
+        <a-text value="Altitude 300" scale="120 120 120"
+            gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 300 0"></a-text>
+
+        <a-text value="Altitude 1000" scale="120 120 120"
+            gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 1000 0"></a-text>
+
+        <a-box id="west" material="color: green;" scale="25 25 25"
+            gps-projected-entity-place="latitude: 47.186425; longitude: -1.579198;">
+        </a-box>
+
+        <a-box id="east" material="color: yellow;" scale="25 25 25"
+            gps-projected-entity-place="latitude: 47.186425; longitude: -1.565;">
+        </a-box>
+
+        <a-box id="north" material="color: blue;" scale="25 25 25"
+            gps-projected-entity-place="latitude: 47.19; longitude: -1.572692;">
+        </a-box>
+
+        <a-entity environment="preset: default"></a-entity>
+        <!-- look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1' -->
+        <a-camera rotation-reader
+            gps-projected-camera="simulateLatitude: 47.186425; simulateLongitude: -1.572692; minDistance: 10;">
+        </a-camera>
+
+    </a-scene>
+
+</body>
