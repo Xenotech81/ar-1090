@@ -6,12 +6,12 @@ const apiPollInterval = 2000;
 
 const distanceScaling = 100;
 
-const sceneProps = { objectScaling: 10 };
+const sceneProps = { objectScale: 1 };
 
 // Set up GUI
 const gui = new dat.GUI()
 const scalingFolder = gui.addFolder('Scaling')
-scalingFolder.add(sceneProps, 'objectScaling', 1, 100).onChange(populateSky)
+scalingFolder.add(sceneProps, 'objectScale', 1, 10).onChange(populateSky)
 
 // global variables, referenced from render loop
 let renderer, scene, camera;
@@ -54,13 +54,13 @@ function populateSky() {
 
 
 function createAircraftEntity(ac) {
-    let aircraftEl = document.createElement('a-box');
+    let aircraftEl = document.createElement('a-entity');
+    aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
     aircraftEl.setAttribute('id', ac.id);
-    aircraftEl.setAttribute('class', 'aircraft');
-    aircraftEl.setAttribute('my-gps-projected-entity-place', `latitude: ${ac.lat}; longitude: ${ac.lon};`);
-    aircraftEl.setAttribute('color', 'red');
-    aircraftEl.setAttribute('position', { x: 0, y: ac.altitudeM, z: 0 });
-    aircraftEl.setAttribute('scale', `${sceneProps.objectScaling} ${sceneProps.objectScaling} ${sceneProps.objectScaling}`);
+    aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
+    aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
+    aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
+    // aircraftEl.setAttribute('scale', `${sceneProps.objectScaling} ${sceneProps.objectScaling} ${sceneProps.objectScaling}`);
 
     return aircraftEl
 }
@@ -102,8 +102,8 @@ function updateAircraftPositions(aircraft) {
         var flightEl = sceneEl.querySelector(`#${ac.id}`);
 
         if (ac.positionKnown && flightEl) {
-            flightEl.object3D.position.y = ac.altitudeM  // Assign before seeting lat/lon (as this will trigger scaling)
-            flightEl.setAttribute('my-gps-projected-entity-place', `latitude: ${ac.lat}; longitude: ${ac.lon};`);
+            flightEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.altitudeM}` });
+            flightEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
             // console.log(`${ac.callsign}: ${flightEl.getAttribute('distanceMsg')}, ${ac.lon}, ${ac.lat}`)
         } else if (ac.positionKnown) {
             sceneEl.appendChild(createAircraftEntity(ac))
@@ -127,7 +127,7 @@ function applyDistanceScaling(el) {
 
     // Set scale=50 at 300km (500~sqrt(300km)) from origin, and scale=10 for <10km
     const objectScale = distance > 10000 ? 50. / 500. * Math.sqrt(distance) : 10
-    el.object3D.scale.set(objectScale, objectScale, objectScale)
+    el.object3D.scale.set(sceneProps.objectScale, sceneProps.objectScale, sceneProps.objectScale)
 }
 
 
