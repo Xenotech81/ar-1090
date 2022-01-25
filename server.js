@@ -33,7 +33,7 @@ app.get('/aircraft', (_, res) => {
         .then((response) => { res.json(response.data.aircraft); })
         .catch((err) => {
             console.error(err);
-            res.status('500').end("Failed retrieving aircraft.json from dump-1090");
+            res.status('500').end(`Failed retrieving aircraft.json from ${DUMP10190_DATA_URL}`);
         })
 });
 
@@ -42,7 +42,7 @@ app.get('/receiver', (_, res) => {
         .then((response) => { res.json(response.data); })
         .catch((err) => {
             console.error(err);
-            res.status('500').end("Failed retrieving receiver.json from dump-1090");
+            res.status('500').end(`Failed retrieving receiver.json from ${DUMP10190_DATA_URL}`);
         })
 });
 
@@ -52,6 +52,6 @@ app.get('/history/:n', (req, res) => {
         .then((response) => { res.json(response.data); })
         .catch((err) => {
             console.error(err);
-            res.status('500').end("Failed retrieving receiver.json from dump-1090");
+            res.status('500').end(`Failed retrieving history_[n].json from ${DUMP10190_DATA_URL}`);
         })
 });
