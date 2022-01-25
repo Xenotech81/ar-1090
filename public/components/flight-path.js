@@ -72,11 +72,12 @@ AFRAME.registerComponent('flight-path', {
         if (newGpsPosition && newGpsPosition.x != 0 && newGpsPosition.y != 0 && !isNaN(newGpsPosition.z)) {
             this.gpsPath.push(new THREE.Vector3(newGpsPosition.x, newGpsPosition.y, newGpsPosition.z));
         }
+        else return
 
         this._gpsToWorldPath();
         this.updateEntityPosition();
         this._updateEntityOrientation();
-        this._addPositionMarker();
+        this._addCurvePoint();
 
         this._setCurveColor(this._newestGpsPathPosition().alt / 0.3048);
     },
@@ -103,7 +104,7 @@ AFRAME.registerComponent('flight-path', {
         this.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), this.orientation));
     },
 
-    _addPositionMarker() {
+    _addCurvePoint() {
         let curve = document.querySelector(`#${this.curveId}`);
         let newestCurvePoint = document.createElement('a-curve-point');
 
