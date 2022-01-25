@@ -34,7 +34,7 @@
     </div>
 
     <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
-        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false; gpsMinDistance: 10;'>
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'>
 
         <a-text value="Altitude 1000m" scale="120 120 120"
             gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 10 0"></a-text>
@@ -57,10 +57,10 @@
             gps-projected-entity-place="latitude: 47.19; longitude: -1.572692;">
         </a-box>
 
-        <a-entity environment="preset: default"></a-entity>
+        <!-- <a-entity environment="preset: default"></a-entity> -->
         <!-- look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1' -->
         <a-camera rotation-reader
-            gps-projected-camera="simulateLatitude: 47.186425; simulateLongitude: -1.572692; minDistance: 10;">
+            gps-projected-camera="simulateLatitude: 47.186425; simulateLongitude: -1.572692; gpsMinDistance: 10;">
         </a-camera>
 
     </a-scene>
