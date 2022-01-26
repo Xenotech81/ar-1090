@@ -36,6 +36,12 @@
     <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
         arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'>
 
+        <a-assets>
+            <a-mixin id="range-ring-mixin" material='color: teal; side: double; transparent: true; opacity: 0.5;'
+                position='0 100 0' rotation='90 0 0'>
+            </a-mixin>
+        </a-assets>
+
         <a-text value="Altitude 1000m" scale="120 120 120"
             gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 10 0"></a-text>
 
@@ -57,29 +63,24 @@
             gps-projected-entity-place="latitude: 47.19; longitude: -1.572692;">
         </a-box>
 
-        <a-ring material='color: teal; side: double; transparent: true; opacity: 0.5' radius-inner="97"
-            radius-outer="100" rotation='90 0 0' position='0 100 0' segments-theta=128>
-            <a-text value="10km" scale="60 60 60" position="0 100 0" rotation='90 180 0'></a-text>
+        <a-ring mixin="range-ring-mixin" radius-inner="97" radius-outer="100" segments-theta=128>
+            <a-text value="10km" scale="60 60 60" position="0 97 -10" rotation='90 180 0' align='center'></a-text>
         </a-ring>
 
-        <a-ring material='color: teal; side: double; transparent: true; opacity: 0.5' radius-inner=" 490"
-            radius-outer="500" rotation='90 0 0' position='0 100 0' segments-theta=64>
-            <a-text value="50km" scale="120 120 120" position="0 500 0" rotation='90 180 0'></a-text>
+        <a-ring mixin="range-ring-mixin" radius-inner=" 490" radius-outer="500" segments-theta=64>
+            <a-text value="50km" scale="120 120 120" position="0 490 -10" rotation='90 180 0' align='center'></a-text>
         </a-ring>
 
-        <a-ring material='color: teal; side: double; transparent: true; opacity: 0.5' radius-inner="990"
-            radius-outer="1000" rotation='90 0 0' position='0 100 0'>
-            <a-text value="100km" scale="120 120 120" position="0 1000 0" rotation='90 180 0'></a-text>
+        <a-ring mixin="range-ring-mixin" radius-inner="990" radius-outer="1000">
+            <a-text value="100km" scale="120 120 120" position="0 990 -10" rotation='90 180 0' align='center'></a-text>
         </a-ring>
 
-        <a-ring material='color: teal; side: double; transparent: true; opacity: 0.5' radius-inner="1490"
-            radius-outer="1500" rotation='90 0 0' position='0 100 0'>
-            <a-text value="150km" scale="120 120 120" position="0 1500 0" rotation='90 180 0'></a-text>
+        <a-ring mixin="range-ring-mixin" radius-inner="1490" radius-outer="1500">
+            <a-text value="150km" scale="120 120 120" position="0 1490 -10" rotation='90 180 0' align='center'></a-text>
         </a-ring>
 
-        <a-ring material='color: teal; side: double; transparent: true; opacity: 0.5' radius-inner="2990"
-            radius-outer="3000" rotation='90 0 0' position='0 100 0'>
-            <a-text value="300km" scale="120 120 120" position="0 3000 0" rotation='90 180 0'></a-text>
+        <a-ring mixin="range-ring-mixin" radius-inner="2990" radius-outer="3000">
+            <a-text value="300km" scale="120 120 120" position="0 2990 -10" rotation='90 180 0' align='center'></a-text>
         </a-ring>
 
         <!-- <a-entity environment="preset: default"></a-entity> -->
