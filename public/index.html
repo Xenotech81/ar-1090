@@ -17,12 +17,12 @@
     <script
         src="https://raw.githack.com/andreasplesch/aframe-meshline-component/master/dist/aframe-meshline-component.min.js"></script>
     <script src="./libs/gps-projected-entity-place.js" defer></script>
-    <script src="./script.js" type="module" defer></script>
     <script src="./components/curve.js"></script>
     <script src="./components/flight-path.js"></script>
     <script src="./components/fixed-wing.js"></script>
     <script src="./geometries/aircraft.js"></script>
     <script src="./styles/flightaware.js"></script>
+    <script src="./systems/dump1090-poll-client.js" type="module"></script>
 </head>
 
 <body style='margin: 0; overflow: hidden;'>
@@ -34,7 +34,7 @@
     </div>
 
     <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
-        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'>
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;' dump1090-poll-client>
 
         <a-assets>
             <a-mixin id="range-ring-mixin" material='color: teal; side: double; transparent: true; opacity: 0.5;'
