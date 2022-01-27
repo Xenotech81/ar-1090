@@ -92,7 +92,22 @@ AFRAME.registerSystem('dump1090-poll-client', {
         aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
 
+        aircraftEl.appendChild(this._createAircraftLabel(ac));
+
         return aircraftEl
+    },
+
+    _createAircraftLabel: function (ac) {
+        let labelEl = document.createElement('a-text');
+
+        labelEl.setAttribute('value', ac.callsign ? ac.callsign : 'N/A');
+        labelEl.setAttribute('position', '0 20 0');
+        labelEl.setAttribute('align', 'center');
+        labelEl.setAttribute('side', 'double');
+        labelEl.setAttribute('scale', '100 100 100');
+        labelEl.setAttribute('look-at', "[gps-projected-camera]");
+
+        return labelEl;
     },
 
     _parseAircraftJson: function (json) {
