@@ -51,17 +51,25 @@
         <a-text value="Altitude 10000m" scale="120 120 120"
             gps-projected-entity-place="latitude: 47.1864181; longitude: -1.5800;" position="0 100 0"></a-text>
 
-        <a-box id="west" material="color: green;" scale="25 25 25"
-            gps-projected-entity-place="latitude: 47.186425; longitude: -1.579198;">
-        </a-box>
+        <a-sphere id="north_marker" radius=10 material="color: red;" position="0 0 -500">
+            <a-text value="N" look-at="[gps-projected-camera]" position="0 25 0" scale="100 100 100" align="center">
+            </a-text>
+        </a-sphere>
 
-        <a-box id="east" material="color: yellow;" scale="25 25 25"
-            gps-projected-entity-place="latitude: 47.186425; longitude: -1.565;">
-        </a-box>
+        <a-sphere id="east_marker" radius=10 material="color: white;" position="500 0 0">
+            <a-text value="E" look-at="[gps-projected-camera]" position="0 25 0" scale="100 100 100" align="center">
+            </a-text>
+        </a-sphere>
 
-        <a-box id="north" material="color: blue;" scale="25 25 25"
-            gps-projected-entity-place="latitude: 47.19; longitude: -1.572692;">
-        </a-box>
+        <a-sphere id="sout_marker" radius=10 material="color: white;" position="0 0 500">
+            <a-text value="S" look-at="[gps-projected-camera]" position="0 25 0" scale="100 100 100" align="center">
+            </a-text>
+        </a-sphere>
+
+        <a-sphere id="west_marker" radius=10 material="color: white;" position="-500 0 0">
+            <a-text value="W" look-at="[gps-projected-camera]" position="0 25 0" scale="100 100 100" align="center">
+            </a-text>
+        </a-sphere>
 
         <a-ring mixin="range-ring-mixin" radius-inner="97" radius-outer="100" segments-theta=128>
             <a-text value="10km" scale="60 60 60" position="0 97 -10" rotation='90 180 0' align='center'></a-text>
