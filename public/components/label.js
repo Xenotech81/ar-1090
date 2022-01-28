@@ -1,7 +1,7 @@
 AFRAME.registerComponent('label', {
 
     schema: {
-        callsign: { default: null },
+        callsign: { default: '' },
         altitude: { type: 'number' },
         distance: { type: 'number' },
         visible: { default: true },
@@ -17,15 +17,12 @@ AFRAME.registerComponent('label', {
         var data = this.data;
 
         if (!this.infoLabel) {
-            this.infoLabel = this._createInfoLabel(data.callsign, data.altitude, data.distance);
+            this.infoLabel = this._createLabel(data.callsign, data.altitude, data.distance);
             this.el.appendChild(this.infoLabel);
         }
 
         if (this.infoLabel.hasLoaded) {
-            // Set callsign only once, if a string value is provided
-            if (!this.callsign && this.data.callsign) {
-                this.infoLabel.querySelector('.infoLabelCallsign').setAttribute('value', data.callsign);
-            }
+            this.infoLabel.querySelector('.infoLabelCallsign').setAttribute('value', data.callsign);
             this.infoLabel.querySelector('.infoLabelAltitude').setAttribute('value', this._altitudeStr(data.altitude));
             this.infoLabel.querySelector('.infoLabelDistance').setAttribute('value', this._distanceStr(data.distance));
 
@@ -35,11 +32,11 @@ AFRAME.registerComponent('label', {
         }
     },
 
-    _createInfoLabel: function (callsign, altitude, distance) {
+    _createLabel: function (callsign, altitude, distance) {
 
         let labelEl = document.createElement('a-entity');
         labelEl.setAttribute('class', 'infoLabel');
-        labelEl.setAttribute('scale', '100 100 100');
+        labelEl.setAttribute('scale', '120 120 120');
         labelEl.setAttribute('look-at', "[gps-projected-camera]");
         labelEl.setAttribute('position', '0 -20 0');
 
@@ -48,6 +45,7 @@ AFRAME.registerComponent('label', {
         callsignEl.setAttribute('value', callsign);
         callsignEl.setAttribute('position', '0 0.5 0');
         callsignEl.setAttribute('align', 'center');
+        callsignEl.setAttribute('scale', '1.5 1.5 1.5');
         callsignEl.setAttribute('side', 'double');
 
         let altitudeEl = document.createElement('a-text');
