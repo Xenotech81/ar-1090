@@ -19,6 +19,7 @@
     <script src="./libs/gps-projected-entity-place.js" defer></script>
     <script src="./components/curve.js"></script>
     <script src="./components/label.js"></script>
+    <script src="./components/cursor-listener.js"></script>
     <script src="./components/flight-path.js"></script>
     <script src="./components/fixed-wing.js"></script>
     <script src="./geometries/aircraft.js"></script>
@@ -67,7 +68,8 @@
             </a-text>
         </a-sphere>
 
-        <a-sphere id="west_marker" radius=10 material="color: white;" position="-500 0 0">
+        <a-sphere id="west_marker" class="clickable" cursor-listener radius=10 material="color: white;"
+            position="-500 0 0">
             <a-text value="W" look-at="[gps-projected-camera]" position="0 25 0" scale="100 100 100" align="center">
             </a-text>
         </a-sphere>
@@ -96,6 +98,14 @@
         <!-- look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1' -->
         <a-camera rotation-reader
             gps-projected-camera="simulateLatitude: 47.186425; simulateLongitude: -1.572692; gpsMinDistance: 10;">
+            <a-entity cursor="fuse: true; fuseTimeout: 1500; rayOrigin: entity;"
+                raycaster="far: 10000; interval: 1000; objects: .clickable" position="0 0 -1"
+                geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                material="color: #41e65d; shader: flat; opacity: 0.5"
+                animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"
+                animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1500; from: 1 1 1; to: 0.1 0.1 0.1"
+                animation__mouseleave="property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 500; to: 1 1 1">
+            </a-entity>
         </a-camera>
 
     </a-scene>

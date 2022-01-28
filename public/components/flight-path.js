@@ -64,8 +64,6 @@ AFRAME.registerComponent('flight-path', {
     update: function (oldData) {
         // Note: update will not be called if same vector is provided twice in a row as newGpsPosition
 
-        console.log("Updating flight-path")
-
         const newGpsPosition = this.data.newGpsPosition;
 
         // On initialization, my-gps-projected-entity-place pushes lat/lon=(0,0) and altitude=Nan -> Do not save this

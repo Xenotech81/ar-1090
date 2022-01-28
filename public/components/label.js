@@ -5,7 +5,7 @@ AFRAME.registerComponent('label', {
         altitude: { type: 'number' },
         distance: { type: 'number' },
         visible: { default: true },
-        showDetails: { default: true },
+        showDetails: { default: false },
     },
 
     init: function () {
@@ -19,6 +19,7 @@ AFRAME.registerComponent('label', {
         if (!this.infoLabel) {
             this.infoLabel = this._createLabel(data.callsign, data.altitude, data.distance);
             this.el.appendChild(this.infoLabel);
+            this.el.addEventListener('click', this._clickListener.bind(this));
         }
 
         if (this.infoLabel.hasLoaded) {
@@ -26,16 +27,16 @@ AFRAME.registerComponent('label', {
             this.infoLabel.querySelector('.infoLabelAltitude').setAttribute('value', this._altitudeStr(data.altitude));
             this.infoLabel.querySelector('.infoLabelDistance').setAttribute('value', this._distanceStr(data.distance));
 
-            this.infoLabel.querySelector('.infoLabelAltitude').object3D.visible = data.showDetails;
-            this.infoLabel.querySelector('.infoLabelDistance').object3D.visible = data.showDetails;
-            this.infoLabel.object3D.visible = data.visible;
+            // this.infoLabel.querySelector('.infoLabelAltitude').object3D.visible = data.showDetails;
+            // this.infoLabel.querySelector('.infoLabelDistance').object3D.visible = data.showDetails;
+            // this.infoLabel.object3D.visible = data.visible;
         }
     },
 
     _createLabel: function (callsign, altitude, distance) {
 
         let labelEl = document.createElement('a-entity');
-        labelEl.setAttribute('class', 'infoLabel');
+        labelEl.setAttribute('class', 'clickable');
         labelEl.setAttribute('scale', '120 120 120');
         labelEl.setAttribute('look-at', "[gps-projected-camera]");
         labelEl.setAttribute('position', '0 -20 0');
@@ -47,6 +48,7 @@ AFRAME.registerComponent('label', {
         callsignEl.setAttribute('align', 'center');
         callsignEl.setAttribute('scale', '1.5 1.5 1.5');
         callsignEl.setAttribute('side', 'double');
+        // callsignEl.setAttribute('geometry', 'primitive: plane; width: auto; height: auto;');
 
         let altitudeEl = document.createElement('a-text');
         altitudeEl.setAttribute('class', 'infoLabelAltitude');
@@ -71,6 +73,11 @@ AFRAME.registerComponent('label', {
         labelEl.setAttribute('visible', this.data.visible);
 
         return labelEl;
+    },
+
+    _clickListener: function () {
+        this.infoLabel.querySelector('.infoLabelAltitude').object3D.visible = true;
+        this.infoLabel.querySelector('.infoLabelDistance').object3D.visible = true;
     },
 
     _altitudeStr: function (altitudeM) {

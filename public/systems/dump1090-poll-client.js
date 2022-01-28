@@ -6,7 +6,7 @@ const AIRCRAFT_ROUTE = "/aircraft";
 
 AFRAME.registerSystem('dump1090-poll-client', {
     schema: {
-        interval: { default: 2 }, aircraftScale: { default: 10 },
+        interval: { default: 2 }, aircraftScale: { default: 6 },
         sceneScale: { default: 1 / 100 }
     },
 
@@ -99,6 +99,9 @@ AFRAME.registerSystem('dump1090-poll-client', {
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
         aircraftEl.setAttribute('info-label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: null })
 
+        aircraftEl.setAttribute('class', 'clickable');
+        aircraftEl.setAttribute('cursor-listener', {});
+
         return aircraftEl
     },
 
@@ -140,9 +143,9 @@ AFRAME.registerSystem('dump1090-poll-client', {
         // Keep scale constant equal MIN_SCALE for dst<MIN_SCALE_RANGE.
 
         const MIN_SCALE = 1;
-        const MAX_SCALE = 30;
+        const MAX_SCALE = 50;
 
-        const MIN_SCALE_RANGE = 10000;  // m
+        const MIN_SCALE_RANGE = 5000;  // m
         const MAX_SCALE_RANGE = 300000;  // m
 
         if (dst < MIN_SCALE_RANGE) {
