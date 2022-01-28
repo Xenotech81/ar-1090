@@ -142,30 +142,10 @@ AFRAME.registerSystem('dump1090-poll-client', {
         el.object3D.scale.set(variableObjectScale, variableObjectScale, variableObjectScale)
     },
 
-    distanceDependentSqrtScale: function (dst) {
-        // Return scale factor dependent on distance dst (usually from camera).
-        // Increase scale as a root function from value MIN_SCALE at MIN_SCALE_RANGE upto MAX_SCALE at MAX_SCALE_RANGE.
-        // Keep scale constant at MIN_SCALE for dst<MIN_SCALE_RANGE.
-
-        const MIN_SCALE = 1;
-        const MAX_SCALE = 30;
-
-        const MIN_SCALE_RANGE = 10000;  // m
-        const MAX_SCALE_RANGE = 300000;  // m
-
-        if (dst < MIN_SCALE_RANGE) {
-            return MIN_SCALE;
-        } else {
-            const a = MIN_SCALE / (MAX_SCALE + Math.sqrt(MIN_SCALE_RANGE) - Math.sqrt(MAX_SCALE_RANGE));
-            const b = MAX_SCALE - a * Math.sqrt(MAX_SCALE_RANGE);
-            return a * Math.sqrt(dst) + b;
-        }
-    },
-
     distanceDependentLinScale: function (dst) {
         // Return scale factor dependent on distance dst (usually from camera).
         // Increase scale as a linear function from value MIN_SCALE at MIN_SCALE_RANGE upto MAX_SCALE at MAX_SCALE_RANGE.
-        // Keep scale constant at MIN_SCALE for dst<MIN_SCALE_RANGE.
+        // Keep scale constant equal MIN_SCALE for dst<MIN_SCALE_RANGE.
 
         const MIN_SCALE = 1;
         const MAX_SCALE = 30;
