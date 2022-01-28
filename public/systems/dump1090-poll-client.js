@@ -82,6 +82,7 @@ AFRAME.registerSystem('dump1090-poll-client', {
             if (ac.positionKnown && flightEl) {
                 flightEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.altitudeM}` });
                 flightEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
+                flightEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: flightEl.getAttribute('distance') })
             } else if (ac.positionKnown) {
                 this.el.appendChild(this._createAircraftEntity(ac))
             }
@@ -96,23 +97,9 @@ AFRAME.registerSystem('dump1090-poll-client', {
         aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
         aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
-
-        aircraftEl.appendChild(this._createAircraftLabel(ac));
+        aircraftEl.setAttribute('info-label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: null })
 
         return aircraftEl
-    },
-
-    _createAircraftLabel: function (ac) {
-        let labelEl = document.createElement('a-text');
-
-        labelEl.setAttribute('value', ac.callsign ? ac.callsign : 'N/A');
-        labelEl.setAttribute('position', '0 20 0');
-        labelEl.setAttribute('align', 'center');
-        labelEl.setAttribute('side', 'double');
-        labelEl.setAttribute('scale', '100 100 100');
-        labelEl.setAttribute('look-at', "[gps-projected-camera]");
-
-        return labelEl;
     },
 
     _parseAircraftJson: function (json) {
