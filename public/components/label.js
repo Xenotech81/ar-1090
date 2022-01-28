@@ -36,19 +36,22 @@ AFRAME.registerComponent('label', {
     _createLabel: function (callsign, altitude, distance) {
 
         let labelEl = document.createElement('a-entity');
-        labelEl.setAttribute('class', 'clickable');
         labelEl.setAttribute('scale', '120 120 120');
         labelEl.setAttribute('look-at', "[gps-projected-camera]");
         labelEl.setAttribute('position', '0 -20 0');
 
         let callsignEl = document.createElement('a-text');
-        callsignEl.setAttribute('class', 'infoLabelCallsign');
+        callsignEl.setAttribute('class', 'infoLabelCallsign clickable');
         callsignEl.setAttribute('value', callsign);
         callsignEl.setAttribute('position', '0 0.5 0');
         callsignEl.setAttribute('align', 'center');
         callsignEl.setAttribute('scale', '1.5 1.5 1.5');
         callsignEl.setAttribute('side', 'double');
-        // callsignEl.setAttribute('geometry', 'primitive: plane; width: auto; height: auto;');
+        callsignEl.setAttribute('wrap-count', 8);  // Needed to scale clickable plane geometry
+        callsignEl.setAttribute('width', 1);  // Needed to scale clickable plane geometry
+        // Clickable surface
+        callsignEl.setAttribute('geometry', 'primitive: plane; width: auto; height: auto;');
+        callsignEl.setAttribute('material', { visible: false })
 
         let altitudeEl = document.createElement('a-text');
         altitudeEl.setAttribute('class', 'infoLabelAltitude');
