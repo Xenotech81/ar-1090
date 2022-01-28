@@ -47,7 +47,7 @@ AFRAME.registerComponent('label', {
         callsignEl.setAttribute('align', 'center');
         callsignEl.setAttribute('scale', '1.5 1.5 1.5');
         callsignEl.setAttribute('side', 'double');
-        callsignEl.setAttribute('wrap-count', 8);  // Needed to scale clickable plane geometry
+        callsignEl.setAttribute('wrap-count', 9);  // Needed to scale clickable plane geometry
         callsignEl.setAttribute('width', 1);  // Needed to scale clickable plane geometry
         // Clickable surface
         callsignEl.setAttribute('geometry', 'primitive: plane; width: auto; height: auto;');
