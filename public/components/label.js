@@ -77,7 +77,9 @@ AFRAME.registerComponent('label', {
 
     _altitudeStr: function (altitudeM) {
         var altitudeStr = 'ALT: --- km';
-        if (altitudeM) {
+        if (altitudeM && altitudeM < 1000) {
+            altitudeStr = `ALT: ${altitudeM.toFixed(0)}m`
+        } else if (altitudeM && altitudeM > 1000) {
             altitudeStr = `ALT: ${(altitudeM / 1000).toFixed(1)}km`
         }
         return altitudeStr;
