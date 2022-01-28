@@ -2,15 +2,18 @@ const AIRCRAFT_ROUTE = "/aircraft";
 // const RECEIVER_ROUTE = "/receiver";
 // const HISTORY_ROUTE = "/history";
 
-const DISTANCE_SCALE = 1 / 100;
 
 
 AFRAME.registerSystem('dump1090-poll-client', {
-    schema: { interval: { default: 2 }, aircraftScale: { default: 10 } },
+    schema: {
+        interval: { default: 2 }, aircraftScale: { default: 10 },
+        sceneScale: { default: 1 / 100 }
+    },
 
     init: function () {
         let scene = this.el;  // In a system el is a reference to the scene
         let _poller = null;
+        let sceneScale = this.data.sceneScale;  // Scaling down all positions and 3D object sizes
 
         // Register event listeners
         ['gps-entity-place-added', 'gps-entity-place-update-positon'].forEach(evt => {
@@ -24,6 +27,8 @@ AFRAME.registerSystem('dump1090-poll-client', {
     },
 
     update: function () {
+        this.sceneScale = this.data.sceneScale;
+
         if (this._poller) {
             clearInterval(this._poller)
         }
@@ -136,9 +141,9 @@ AFRAME.registerSystem('dump1090-poll-client', {
         const pos = el.getAttribute('position');
         const distance = el.getAttribute('distance');
 
-        el.object3D.position.set(pos.x * DISTANCE_SCALE, pos.y * DISTANCE_SCALE, pos.z * DISTANCE_SCALE);
+        el.object3D.position.set(pos.x * this.sceneScale, pos.y * this.sceneScale, pos.z * this.sceneScale);
 
-        const variableObjectScale = this.distanceDependentLinScale(distance) * this.data.aircraftScale * DISTANCE_SCALE;
+        const variableObjectScale = this.distanceDependentLinScale(distance) * this.data.aircraftScale * this.sceneScale;
         el.object3D.scale.set(variableObjectScale, variableObjectScale, variableObjectScale)
     },
 
