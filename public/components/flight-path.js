@@ -85,10 +85,7 @@ AFRAME.registerComponent('flight-path', {
         const gps = this._newestGpsPathPosition();
 
         // Let gps-projected-entity-place handle the position update; it has side effects
-        el.setAttribute('position', { x: 0, y: gps.alt, z: 0 });  // set altitude first!
-        el.setAttribute('my-gps-projected-entity-place', `latitude: ${gps.lat}; longitude: ${gps.lon};`);
-
-
+        el.setAttribute('my-gps-projected-entity-place', `latitude: ${gps.lat}; longitude: ${gps.lon}; altitude: ${gps.alt}`);
     },
 
     _updateEntityOrientation: function () {
@@ -98,8 +95,9 @@ AFRAME.registerComponent('flight-path', {
         var oldWorldPos = this.worldPath[this.worldPath.length - 2];
         var newWorldPos = this.worldPath[this.worldPath.length - 1];
 
+        // Assume that geometry was originally pointing north: THREE.Vector3(0, 0, -1)
         this.orientation.copy(newWorldPos).sub(oldWorldPos).normalize();
-        this.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), this.orientation));
+        this.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), this.orientation));
     },
 
     _addCurvePoint() {

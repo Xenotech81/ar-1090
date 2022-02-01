@@ -22,11 +22,18 @@
 AFRAME.registerComponent('my-gps-projected-entity-place', {
     _cameraGps: null,
     schema: {
+        // Timestamp since Linux epoch
+        timestamp: { type: 'number', default: Date.now() },
         longitude: {
             type: 'number',
             default: 0,
         },
         latitude: {
+            type: 'number',
+            default: 0,
+        },
+        // Altitude in meters
+        altitude: {
             type: 'number',
             default: 0,
         }
@@ -49,8 +56,6 @@ AFRAME.registerComponent('my-gps-projected-entity-place', {
                 this._updatePosition();
             }
         };
-
-
 
         // update position needs to worry about distance but nothing else?
         this.updateCameraPositionListener = (ev) => {
@@ -84,7 +89,7 @@ AFRAME.registerComponent('my-gps-projected-entity-place', {
         // Update the coordinates of this entity place. 
         this._updatePosition()
         const distanceForMsg = this._updateDistance()
-        window.dispatchEvent(new CustomEvent('gps-entity-place-update-positon', { detail: { component: this.el, distance: distanceForMsg } }));
+        window.dispatchEvent(new CustomEvent('gps-entity-place-update-position', { detail: { component: this.el, distance: distanceForMsg } }));
     },
 
     /**
@@ -106,13 +111,12 @@ AFRAME.registerComponent('my-gps-projected-entity-place', {
     // set position to world coords using the lat/lon 
     _updatePosition: function () {
         var worldPos = this._cameraGps.latLonToWorld(this.data.latitude, this.data.longitude);
-        var position = this.el.getAttribute('position');
 
         // update element's position in 3D world
         //this.el.setAttribute('position', position);
         this.el.setAttribute('position', {
             x: worldPos[0],
-            y: position.y,
+            y: this.data.altitude,
             z: worldPos[1]
         });
     },
