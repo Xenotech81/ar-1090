@@ -60,9 +60,9 @@ AFRAME.registerComponent('aircraft', {
  */
 AFRAME.registerPrimitive('a-aircraft', extendDeep({}, meshMixin, {
     defaultComponents: {
-        "my-gps-projected-entity-place": {},
         aircraft: {},
-        geometry: { primitive: 'aircraft', model: 'arrow' },
+        // geometry: { primitive: 'aircraft', model: 'arrow' },
+        geometry: { primitive: 'sphere', radius: 15 },
     },
 
     mappings: {

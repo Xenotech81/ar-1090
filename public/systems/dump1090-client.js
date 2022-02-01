@@ -17,11 +17,10 @@ const HISTORY_ROUTE = "/history";
  */
 AFRAME.registerSystem('dump1090-client', {
     schema: {
-        pollInterval: { default: 2 },  // Poll interval in seconds
+        pollInterval: { default: 1 },  // Poll interval in seconds
     },
 
     init: function () {
-        console.log("POLL")
         let _poller = null;
         this.receiver = null;  // Receiver info: version, refresh [ms], history [s], lat, lon
 

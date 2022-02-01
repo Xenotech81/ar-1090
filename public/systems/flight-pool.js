@@ -15,7 +15,7 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     init: function () {
-        let scene = this.el;  // In a system el is a reference to the scene
+        var scene = this.el;  // In a system el is a reference to the scene
         this._flightPool = [];
 
         // Register event listeners
@@ -23,12 +23,13 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     _createAircraftEntity: function (ac) {
-        let aircraftEl = document.createElement('a-entity');
+        let aircraftEl = document.createElement('a-aircraft');
 
-        aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
+        // aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
         aircraftEl.setAttribute('id', ac.id);
-        aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
-        aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
+        aircraftEl.setAttribute('callsign', ac.callsign);
+        // aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
+        // aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
         aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: null })
 
@@ -43,14 +44,14 @@ AFRAME.registerSystem('flight-pool', {
         aircraftJson.forEach((json) => {
             const ac = this._fromJson(json)
 
-            var flightEl = this.el.querySelector(`#${ac.id}`);
+            var aircraftEl = this.el.querySelector(`#${ac.id}`);
 
             // Update only if position is known
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
-            if (ac.positionKnown && flightEl) {
-                flightEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.altitudeM}` });
-                flightEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
-                flightEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: flightEl.getAttribute('distance') })
+            if (ac.positionKnown && aircraftEl) {
+                aircraftEl.setAttribute('aircraft', { lat: ac.lat, lon: ac.lon, altitude: ac.altitudeM });
+                aircraftEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
+                aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: aircraftEl.getAttribute('distance') })
             } else if (ac.positionKnown) {
                 this.el.appendChild(this._createAircraftEntity(ac))
             }
