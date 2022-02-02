@@ -23,7 +23,9 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     _createAircraftEntity: function (ac) {
+        console.log("Creating new aircraft: %s (%s)", ac.callsign, ac.id)
         let aircraftEl = document.createElement('a-aircraft');
+
 
         // aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
         aircraftEl.setAttribute('id', ac.id);
@@ -49,6 +51,8 @@ AFRAME.registerSystem('flight-pool', {
             // Update only if position is known
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
             if (ac.positionKnown && aircraftEl) {
+                aircraftEl.components.aircraft.initFromJson(json);
+
                 aircraftEl.setAttribute('aircraft', { lat: ac.lat, lon: ac.lon, altitude: ac.altitudeM });
                 aircraftEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
                 aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: aircraftEl.getAttribute('distance') })
@@ -73,7 +77,7 @@ AFRAME.registerSystem('flight-pool', {
         const altitudeM = typeof altitudeFt === 'number' ? 0.3048 * altitudeFt : null;
         const onGround = altitudeM === 0 ? true : false;
 
-        // True, if positional data is complete (for plotting)
+        // True, if positional data is complete (for plotting); hex is needed for unique id
         const positionKnown = hex && lon && lat && (typeof altitudeM === "number") ? true : false;
 
         return { 'id': id, 'positionKnown': positionKnown, 'hex': hex, 'callsign': callsign, 'lon': lon, 'lat': lat, 'altitudeFt': altitudeFt, 'altitudeM': altitudeM, 'onGround': onGround }

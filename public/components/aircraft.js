@@ -41,6 +41,7 @@ AFRAME.registerComponent('aircraft', {
     },
 
     init: function () {
+        this._planeObject = new PlaneObject();
         this.id = `id_${this.data.callsign}`;
     },
 
@@ -49,6 +50,10 @@ AFRAME.registerComponent('aircraft', {
 
         // Let gps-projected-entity-place handle the position update; it has side effects
         this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.data.lat}; longitude: ${this.data.lon}; altitude: ${this.data.altitude}`);
+    },
+
+    initFromJson: function (json) {
+        this._planeObject.updateData(Date.now(), json)
     }
 
 });

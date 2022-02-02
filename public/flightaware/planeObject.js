@@ -1,9 +1,15 @@
 "use strict";
 
-function PlaneObject(icao) {
+// Receiver position overwrite
+const SitePosition = null;
+
+
+// function PlaneObject(icao) {
+function PlaneObject() {
     // Info about the plane
-    this.icao = icao;
-    this.icaorange = findICAORange(icao);
+    // this.icao = icao;
+    this.icao = null;
+    // this.icaorange = findICAORange(icao);
     this.flight = null;
     this.squawk = null;
     this.selected = false;
@@ -79,33 +85,33 @@ function PlaneObject(icao) {
 
     // start from a computed registration, let the DB override it
     // if it has something else.
-    this.registration = registration_from_hexid(this.icao);
+    this.registration = null // registration_from_hexid(this.icao);
     this.icaotype = null;
     this.typeDescription = null;
     this.wtc = null;
 
     // request metadata
-    getAircraftData(this.icao).done(function (data) {
-        if ("r" in data) {
-            this.registration = data.r;
-        }
+    // getAircraftData(this.icao).done(function (data) {
+    //     if ("r" in data) {
+    //         this.registration = data.r;
+    //     }
 
-        if ("t" in data) {
-            this.icaotype = data.t;
-        }
+    //     if ("t" in data) {
+    //         this.icaotype = data.t;
+    //     }
 
-        if ("desc" in data) {
-            this.typeDescription = data.desc;
-        }
+    //     if ("desc" in data) {
+    //         this.typeDescription = data.desc;
+    //     }
 
-        if ("wtc" in data) {
-            this.wtc = data.wtc;
-        }
+    //     if ("wtc" in data) {
+    //         this.wtc = data.wtc;
+    //     }
 
-        if (this.selected) {
-            refreshSelected();
-        }
-    }.bind(this));
+    //     if (this.selected) {
+    //         refreshSelected();
+    //     }
+    // }.bind(this));
 }
 
 PlaneObject.prototype.isFiltered = function () {
