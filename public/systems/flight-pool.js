@@ -51,7 +51,7 @@ AFRAME.registerSystem('flight-pool', {
             // Update only if position is known
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
             if (ac.positionKnown && aircraftEl) {
-                aircraftEl.components.aircraft.initFromJson(json);
+                aircraftEl.components.aircraft.updateData(Date.now(), json);
 
                 aircraftEl.setAttribute('aircraft', { lat: ac.lat, lon: ac.lon, altitude: ac.altitudeM });
                 aircraftEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
