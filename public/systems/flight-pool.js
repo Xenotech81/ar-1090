@@ -52,9 +52,6 @@ AFRAME.registerSystem('flight-pool', {
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
             if (ac.positionKnown && aircraftEl) {
                 aircraftEl.components.aircraft.updateData(Date.now(), json);
-
-                aircraftEl.setAttribute('aircraft', { lat: ac.lat, lon: ac.lon, altitude: ac.altitudeM });
-                aircraftEl.setAttribute('material', { color: altitudeLines(ac.altitudeFt) });
                 aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: aircraftEl.getAttribute('distance') })
             } else if (ac.positionKnown) {
                 this.el.appendChild(this._createAircraftEntity(ac))

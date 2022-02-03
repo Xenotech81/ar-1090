@@ -6,9 +6,16 @@ var meshMixin = AFRAME.primitives.getMeshMixin();
 
 // var planeObject = require('../lib/planeObject');
 
-// Receiver position overwrite
+// Constants overwrite
 const SitePosition = null;
+var LastReceiverTimestamp = 0;
+var StaleReceiverCount = 0;
 
+var SpecialSquawks = {
+    '7500': { cssClass: 'squawk7500', markerColor: 'rgb(255, 85, 85)', text: 'Aircraft Hijacking' },
+    '7600': { cssClass: 'squawk7600', markerColor: 'rgb(0, 255, 255)', text: 'Radio Failure' },
+    '7700': { cssClass: 'squawk7700', markerColor: 'rgb(255, 255, 0)', text: 'General Emergency' }
+};
 
 /**
  * aircraft component
@@ -19,8 +26,11 @@ const SitePosition = null;
  * (https://github.com/AR-js-org/AR.js/blob/master/aframe/src/location-based/gps-projected-entity-place.js)
  * to ranslat the GPS position to three.js world position.
  * 
- * Example:
+ * Example use from HTML:
  * <a-aircraft callsign='abc123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
+ * 
+ * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method, 
+ * and NOT by updating through the schema.
  */
 AFRAME.registerComponent('aircraft', {
     dependencies: ['my-gps-projected-entity-place'],
@@ -44,6 +54,7 @@ AFRAME.registerComponent('aircraft', {
     },
 
     init: function () {
+        // Unique id of this aircraft entity
         this.id = `id_${this.data.callsign}`;
 
         // Info about the plane
@@ -56,9 +67,9 @@ AFRAME.registerComponent('aircraft', {
         this.category = null;
 
         // Basic location information
-        this.altitude = null;
-        this.alt_baro = null;
-        this.alt_geom = null;
+        this.altitude = null;  // ft
+        this.alt_baro = null;  // ft
+        this.alt_geom = null;  // ft
 
         this.speed = null;
         this.gs = null;
@@ -105,15 +116,8 @@ AFRAME.registerComponent('aircraft', {
         this.seen_pos = null;
 
         // Display info
-        this.visible = true;
-        this.marker = null;
-        this.markerStyle = null;
-        this.markerIcon = null;
-        this.markerStaticStyle = null;
-        this.markerStaticIcon = null;
-        this.markerStyleKey = null;
-        this.markerSvgKey = null;
-        this.filter = {};
+        this.visible = true;  // TODO: This status does not belong in this component; it must be managed globally
+        this.filter = {};  // TODO: This object does not belong in this component; it must be managed globally
 
         // start from a computed registration, let the DB override it
         // if it has something else.
@@ -301,10 +305,47 @@ AFRAME.registerComponent('aircraft', {
         } else {
             this.speed = null;
         }
+
+        this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
+        this.updateTick(receiver_timestamp, this.LastReceiverTimestamp)
+        this.LastReceiverTimestamp = receiver_timestamp;
+
+        // Check for stale receiver data (TODO: This must move to dump1090-receiver component)
+        // https://github.com/flightaware/dump1090/blob/v7.1/public_html/script.js
+        // var now = data.now;  // now property of JSON returned from dump1090
+        var now = Date.now();
+        if (LastReceiverTimestamp === now) {
+            StaleReceiverCount++;
+            if (StaleReceiverCount > 5) {
+                console.log("The data from dump1090 hasn't been updated in a while. Maybe dump1090 is no longer running?");
+            }
+        } else {
+            StaleReceiverCount = 0;
+            LastReceiverTimestamp = now;
+        }
+    },
+
+    /**
+    * Transform feet into meter.
+    */
+    f2m(ft) {
+        return ft * 0.3048;
+    },
+
+    /**
+    * Determine from current and previous time stamps and positions if airplance has moved.
+    */
+    moved: function (receiver_timestamp, last_timestamp) {
+        if (!this.position)
+            return false;
+        if (this.prev_position && this.position[0] == this.prev_position[0] && this.position[1] == this.prev_position[1])
+            return false;
+        else return true
     },
 
     /**
     * Based on age of last update, manage airplane and track visibility. 
+    * TODO: Move this logic to flight-pool component
     */
     updateTick: function (receiver_timestamp, last_timestamp) {
         // recompute seen and seen_pos
@@ -314,69 +355,162 @@ AFRAME.registerComponent('aircraft', {
         // If no packet in over 58 seconds, clear the plane.
         if (this.seen > 58) {
             if (this.visible) {
-                //console.log("hiding " + this.icao);
-                this.clearMarker();
+                // The entity itself must detached from the scene (e.g., removeChild)
                 this.visible = false;
-                if (SelectedPlane == this.icao)
-                    selectPlaneByHex(null, false);
+                // Also, deselect this plane if it was in "selected" state
+                // if (SelectedPlane == this.icao)
+                //     selectPlaneByHex(null, false);
             }
         } else {
             if (this.position !== null && (this.selected || this.seen_pos < 60)) {
                 this.visible = true;
-                if (this.updateTrack(receiver_timestamp, last_timestamp)) {
-                    this.updateLines();
-                    this.updateMarker(true);
+                // if (this.updateTrack(receiver_timestamp, last_timestamp)) {
+                if (this.moved(receiver_timestamp, last_timestamp)) {
+                    // this.updateLines();
+                    this.updateMaterial();
                 } else {
-                    this.updateMarker(false); // didn't move
+                    this.updateMaterial(); // didn't move
                 }
             } else {
-                this.clearMarker();
+                this.remove();
                 this.visible = false;
             }
         }
     },
 
     /**
-    * Delete plane icon from PlaneIconFeatures pool and and silent click listener.
+    * Update material properties.
     */
-    clearMarker: function () {
-        if (this.marker) {
-            PlaneIconFeatures.remove(this.marker);
-            PlaneIconFeatures.remove(this.markerStatic);
-            /* FIXME google.maps.event.clearListeners(this.marker, 'click'); */
-            this.marker = this.markerStatic = null;
+    updateMaterial: function () {
+        if (!this.visible || this.position == null || this.isFiltered()) {
+            this.el.visible = false;
+            return;
+        } else {
+            this.el.visible = true;
         }
+
+        // this.el.setAttribute('material', { color: altitudeLines(this.altitude) });
+        this.el.setAttribute('material', { color: this.getMarkerColor() });
     },
 
     /**
-    * Update our marker on the map.
+    * Return airplane color as HSL string.
+    * 
+    * Color criteria:
+    * - Squawk code
+    * - Altitude; calls getAltitudeColor()
+    * - Last position update age (stale)
+    * - Selection status by user
+    * - Mlat position
     */
-    updateMarker: function (moved) {
-        if (!this.visible || this.position == null || this.isFiltered()) {
-            this.clearMarker();
-            return;
+    getMarkerColor: function () {
+        // Emergency squawks override everything else
+        if (this.squawk in SpecialSquawks)
+            return SpecialSquawks[this.squawk].markerColor;
+
+        var h, s, l;
+
+        var colorArr = this.getAltitudeColor();
+
+        h = colorArr[0];
+        s = colorArr[1];
+        l = colorArr[2];
+
+        // If we have not seen a recent position update, change color
+        if (this.seen_pos > 15) {
+            h += ColorByAlt.stale.h;
+            s += ColorByAlt.stale.s;
+            l += ColorByAlt.stale.l;
         }
 
-        this.updateIcon();
-        if (this.marker) {
-            if (moved) {
-                this.marker.setGeometry(new ol.geom.Point(ol.proj.fromLonLat(this.position)));
-                this.markerStatic.setGeometry(new ol.geom.Point(ol.proj.fromLonLat(this.position)));
-            }
-        } else {
-            this.marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(this.position)));
-            this.marker.hex = this.icao;
-            this.marker.setStyle(this.markerStyle);
-            PlaneIconFeatures.push(this.marker);
-
-            this.markerStatic = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat(this.position)));
-            this.markerStatic.hex = this.icao;
-            this.markerStatic.setStyle(this.markerStaticStyle);
-            PlaneIconFeatures.push(this.markerStatic);
+        // If this marker is selected, change color
+        if (this.selected && !SelectedAllPlanes) {
+            h += ColorByAlt.selected.h;
+            s += ColorByAlt.selected.s;
+            l += ColorByAlt.selected.l;
         }
+
+        // If this marker is a mlat position, change color
+        if (this.position_from_mlat) {
+            h += ColorByAlt.mlat.h;
+            s += ColorByAlt.mlat.s;
+            l += ColorByAlt.mlat.l;
+        }
+
+        if (h < 0) {
+            h = (h % 360) + 360;
+        } else if (h >= 360) {
+            h = h % 360;
+        }
+
+        if (s < 5) s = 5;
+        else if (s > 95) s = 95;
+
+        if (l < 5) l = 5;
+        else if (l > 95) l = 95;
+
+        return 'hsl(' + (h / 5).toFixed(0) * 5 + ',' + (s / 5).toFixed(0) * 5 + '%,' + (l / 5).toFixed(0) * 5 + '%)'
     },
 
+    /**
+    * Return color as array of h,s,l values as function of altitude (in feet).
+    * 
+    * If altitude is:
+    * - null: unknown color
+    * - "ground": ground color
+    * - else: air color
+    * 
+    * Uses styles.ColorByAlt object
+    */
+    getAltitudeColor: function (altitude) {
+        var h, s, l;
 
+        if (typeof altitude === 'undefined') {
+            altitude = this.altitude;
+        }
+
+        if (altitude === null) {
+            h = ColorByAlt.unknown.h;
+            s = ColorByAlt.unknown.s;
+            l = ColorByAlt.unknown.l;
+        } else if (altitude === "ground") {
+            h = ColorByAlt.ground.h;
+            s = ColorByAlt.ground.s;
+            l = ColorByAlt.ground.l;
+        } else {
+            s = ColorByAlt.air.s;
+            l = ColorByAlt.air.l;
+
+            // find the pair of points the current altitude lies between,
+            // and interpolate the hue between those points
+            var hpoints = ColorByAlt.air.h;
+            h = hpoints[0].val;
+            for (var i = hpoints.length - 1; i >= 0; --i) {
+                if (altitude > hpoints[i].alt) {
+                    if (i == hpoints.length - 1) {
+                        h = hpoints[i].val;
+                    } else {
+                        h = hpoints[i].val + (hpoints[i + 1].val - hpoints[i].val) * (altitude - hpoints[i].alt) / (hpoints[i + 1].alt - hpoints[i].alt)
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (h < 0) {
+            h = (h % 360) + 360;
+        } else if (h >= 360) {
+            h = h % 360;
+        }
+
+        if (s < 5) s = 5;
+        else if (s > 95) s = 95;
+
+        if (l < 5) l = 5;
+        else if (l > 95) l = 95;
+
+        return [h, s, l];
+    },
 });
 
 
