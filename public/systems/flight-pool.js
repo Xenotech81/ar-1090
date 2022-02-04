@@ -74,6 +74,7 @@ AFRAME.registerSystem('flight-pool', {
             console.log("State dead was added to " + entityEl.components.aircraft.id);
             entityEl.parentNode.removeChild(entityEl);
             entityEl.destroy();
+            console.log("Aircraft destroyed")
         }
     },
 
@@ -100,13 +101,14 @@ AFRAME.registerSystem('flight-pool', {
                 if (aircraft.seen_pos < 60) {
                     aircraft.visible = true;
                     // if (this.updateTrack(now, last_timestamp)) {
-                    if (aircraft.moved(now, aircraft.LastReceiverTimestamp)) {
+                    if (aircraft.moved()) {
                         // this.updateLines();
                         aircraft.updateMaterial();
                     } else {
                         aircraft.updateMaterial(); // didn't move
                     }
                 } else {
+                    console.log("Addind dead state to " + aircraft.id)
                     aircraftEl.addState('dead');
                 }
             }

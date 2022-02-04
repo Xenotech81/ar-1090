@@ -218,9 +218,7 @@ AFRAME.registerComponent('aircraft', {
         this.rssi = data.rssi;
         this.last_message_timestamp = receiver_timestamp;
 
-
         // simple fields
-
         var fields = ["alt_baro", "alt_geom", "gs", "ias", "tas", "track",
             "track_rate", "mag_heading", "true_heading", "mach",
             "roll", "nav_heading", "nav_modes",
@@ -310,7 +308,8 @@ AFRAME.registerComponent('aircraft', {
         if (this.position) {
             this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
         }
-        this.LastReceiverTimestamp = receiver_timestamp;
+
+
 
         if (!this.el.is('dead')) {
             this.el.dispatchEvent(new CustomEvent('data-updated'));
@@ -327,7 +326,7 @@ AFRAME.registerComponent('aircraft', {
     /**
     * Determine from current and previous time stamps and positions if airplance has moved.
     */
-    moved: function (receiver_timestamp, last_timestamp) {
+    moved: function () {
         if (!this.position)
             return false;
         if (this.prev_position && this.position[0] == this.prev_position[0] && this.position[1] == this.prev_position[1])
@@ -335,13 +334,11 @@ AFRAME.registerComponent('aircraft', {
         else return true
     },
 
-
-
     /**
     * Update material properties.
     */
     updateMaterial: function () {
-        if (!this.visible || this.position == null || this.isFiltered()) {
+        if (this.position == null || this.isFiltered()) {
             this.el.visible = false;
             return;
         } else {
@@ -377,7 +374,6 @@ AFRAME.registerComponent('aircraft', {
 
         // If we have not seen a recent position update, change color
         if (this.seen_pos > 15) {
-            this.el.addState('stale');
             h += ColorByAlt.stale.h;
             s += ColorByAlt.stale.s;
             l += ColorByAlt.stale.l;
@@ -385,7 +381,6 @@ AFRAME.registerComponent('aircraft', {
 
         // If this marker is selected, change color
         if (this.selected && !SelectedAllPlanes) {
-            this.el.addState('selected');
             h += ColorByAlt.selected.h;
             s += ColorByAlt.selected.s;
             l += ColorByAlt.selected.l;
@@ -393,7 +388,6 @@ AFRAME.registerComponent('aircraft', {
 
         // If this marker is a mlat position, change color
         if (this.position_from_mlat) {
-            this.el.addState('mlat');
             h += ColorByAlt.mlat.h;
             s += ColorByAlt.mlat.s;
             l += ColorByAlt.mlat.l;
