@@ -27,7 +27,7 @@ var SpecialSquawks = {
  * to ranslat the GPS position to three.js world position.
  * 
  * Example use from HTML:
- * <a-aircraft callsign='abc123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
+ * <a-aircraft flight='abc123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
  * 
  * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method, 
  * and NOT by updating through the schema.
@@ -36,8 +36,10 @@ AFRAME.registerComponent('aircraft', {
     dependencies: ['my-gps-projected-entity-place'],
 
     schema: {
-        // Timestamp since Linux epoch
-        callsign: { default: '' },
+        // Will be used as unique id of this entity
+        id: {
+            default: ''
+        },
         lon: {
             default: 0,
         },
@@ -55,7 +57,7 @@ AFRAME.registerComponent('aircraft', {
 
     init: function () {
         // Unique id of this aircraft entity
-        this.id = `id_${this.data.callsign}`;
+        this.id = this.data.id;
 
         // Info about the plane
         // this.icao = icao;
@@ -306,7 +308,9 @@ AFRAME.registerComponent('aircraft', {
             this.speed = null;
         }
 
-        this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
+        if (this.position) {
+            this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
+        }
         this.updateTick(receiver_timestamp, this.LastReceiverTimestamp)
         this.LastReceiverTimestamp = receiver_timestamp;
 
@@ -322,6 +326,10 @@ AFRAME.registerComponent('aircraft', {
         } else {
             StaleReceiverCount = 0;
             LastReceiverTimestamp = now;
+        }
+
+        if (!this.el.is('dead')) {
+            this.el.dispatchEvent(new CustomEvent('data-updated'));
         }
     },
 
@@ -352,17 +360,11 @@ AFRAME.registerComponent('aircraft', {
         this.seen = receiver_timestamp - this.last_message_time;
         this.seen_pos = (this.last_position_time === null ? null : receiver_timestamp - this.last_position_time);
 
-        // If no packet in over 58 seconds, clear the plane.
+        // If no packet in over 58 seconds, mark as dead and ready for removal.
         if (this.seen > 58) {
-            if (this.visible) {
-                // The entity itself must detached from the scene (e.g., removeChild)
-                this.visible = false;
-                // Also, deselect this plane if it was in "selected" state
-                // if (SelectedPlane == this.icao)
-                //     selectPlaneByHex(null, false);
-            }
+            this.el.addState('stale');
         } else {
-            if (this.position !== null && (this.selected || this.seen_pos < 60)) {
+            if (this.position !== null && this.seen_pos < 60) {
                 this.visible = true;
                 // if (this.updateTrack(receiver_timestamp, last_timestamp)) {
                 if (this.moved(receiver_timestamp, last_timestamp)) {
@@ -372,8 +374,7 @@ AFRAME.registerComponent('aircraft', {
                     this.updateMaterial(); // didn't move
                 }
             } else {
-                this.remove();
-                this.visible = false;
+                this.el.addState('dead');
             }
         }
     },
@@ -418,6 +419,7 @@ AFRAME.registerComponent('aircraft', {
 
         // If we have not seen a recent position update, change color
         if (this.seen_pos > 15) {
+            this.el.addState('stale');
             h += ColorByAlt.stale.h;
             s += ColorByAlt.stale.s;
             l += ColorByAlt.stale.l;
@@ -425,6 +427,7 @@ AFRAME.registerComponent('aircraft', {
 
         // If this marker is selected, change color
         if (this.selected && !SelectedAllPlanes) {
+            this.el.addState('selected');
             h += ColorByAlt.selected.h;
             s += ColorByAlt.selected.s;
             l += ColorByAlt.selected.l;
@@ -432,6 +435,7 @@ AFRAME.registerComponent('aircraft', {
 
         // If this marker is a mlat position, change color
         if (this.position_from_mlat) {
+            this.el.addState('mlat');
             h += ColorByAlt.mlat.h;
             s += ColorByAlt.mlat.s;
             l += ColorByAlt.mlat.l;
@@ -526,7 +530,7 @@ AFRAME.registerPrimitive('a-aircraft', extendDeep({}, meshMixin, {
     },
 
     mappings: {
-        'callsign': 'aircraft.callsign',
+        'id': 'aircraft.id',
         'lat': 'aircraft.lat',
         'lon': 'aircraft.lon',
         'altitude': 'aircraft.altitude',

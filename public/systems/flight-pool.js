@@ -9,74 +9,122 @@
  * 
  */
 AFRAME.registerSystem('flight-pool', {
-    dependencies: ['dump1090-client'], // flight-path, label, fixed-wing
+    // dependencies: ['dump1090-client'], // flight-path, label, fixed-wing
 
     schema: {
+        purgePeriod: { default: 3 }  // sec
     },
 
     init: function () {
         var scene = this.el;  // In a system el is a reference to the scene
-        this._flightPool = [];
+        this.lastPurge = 0;
 
         // Register event listeners
-        this.el.addEventListener('dump1090-data-received', ev => this._updateAircraftEntities(ev.detail.aircraftJson))
+        scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail.aircraftJson))
     },
 
-    _createAircraftEntity: function (ac) {
-        console.log("Creating new aircraft: %s (%s)", ac.callsign, ac.id)
+    _createAircraftElement: function (id, json) {
+        const flight = json.flight ? json.flight.trim() : null;
+        console.log("Creating new aircraft: %s (%s)", flight, id)
+
         let aircraftEl = document.createElement('a-aircraft');
 
-
         // aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
-        aircraftEl.setAttribute('id', ac.id);
-        aircraftEl.setAttribute('callsign', ac.callsign);
+        aircraftEl.setAttribute('id', id);
+        // aircraftEl.setAttribute('flight', flight);
         // aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
         // aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
-        aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: null })
 
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
 
-        return aircraftEl
+        aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
+        aircraftEl.addEventListener('data-updated', ev => this.dataUpdatedListener(ev));
+
+        this.el.appendChild(aircraftEl)
     },
 
-    _updateAircraftEntities: function (aircraftJson) {
+    updateAircraftElements: function (aircraftJson) {
         // Update positions of known aircraft or create new a-aircraft entities from aircraft.json contents.
         aircraftJson.forEach((json) => {
-            const ac = this._fromJson(json)
+            // We need a valid hexid to uniquely identify the aircraft for later updates
+            const id = this.idFromHex(json.hex);
+            if (id === null) return
 
-            var aircraftEl = this.el.querySelector(`#${ac.id}`);
+            const flight = json.flight ? json.flight.trim() : null;
+            // const positionKnown = json.lon && json.lat && (typeof json.altitude === "number") ? true : false;
+
+            var aircraftEl = this.el.querySelector(`#${id}`);
 
             // Update only if position is known
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
-            if (ac.positionKnown && aircraftEl) {
-                aircraftEl.components.aircraft.updateData(Date.now(), json);
-                aircraftEl.setAttribute('label', { callsign: ac.callsign, altitude: ac.altitudeM, distance: aircraftEl.getAttribute('distance') })
-            } else if (ac.positionKnown) {
-                this.el.appendChild(this._createAircraftEntity(ac))
+            if (aircraftEl) {
+                aircraftEl.components.aircraft.updateData(Date.now(), json);  // In this moment the aircraft state can change to 'dead' and the stateAddedListener will immediately delete it!
+            } else {
+                this._createAircraftElement(id, json)
             }
         })
     },
 
-    _fromJson: function (json) {
-        // Parse one entry of aircraft.json file to a planeObject.
+    // Create clean id string ("id_<hex>")
+    idFromHex: function (hex) {
+        if (hex === null) return null
 
-        // Create clean id string
-        const id_ = json.hex.startsWith("~") ? json.hex.substring(2) : json.hex
-        const id = `id_${id_}`
-
-        const hex = json.hex
-        const callsign = json.flight ? json.flight.trim() : null;
-        const lon = json.lon;
-        const lat = json.lat;
-        const altitudeFt = typeof json.alt_geom === 'number' ? json.alt_geom : json.baro
-        const altitudeM = typeof altitudeFt === 'number' ? 0.3048 * altitudeFt : null;
-        const onGround = altitudeM === 0 ? true : false;
-
-        // True, if positional data is complete (for plotting); hex is needed for unique id
-        const positionKnown = hex && lon && lat && (typeof altitudeM === "number") ? true : false;
-
-        return { 'id': id, 'positionKnown': positionKnown, 'hex': hex, 'callsign': callsign, 'lon': lon, 'lat': lat, 'altitudeFt': altitudeFt, 'altitudeM': altitudeM, 'onGround': onGround }
+        const hexCleaned = hex.startsWith("~") ? hex.substring(2) : hex
+        return `id_${hexCleaned}`
     },
+
+    // _fromJson: function (json) {
+    //     // Parse one entry of aircraft.json file to a planeObject.
+
+
+
+    //     if (this.idFromHex(hex) === null) return {}
+
+    //     const hex = json.hex
+    //     const flight = json.flight ? json.flight.trim() : null;
+    //     const lon = json.lon;
+    //     const lat = json.lat;
+    //     const altitudeFt = typeof json.alt_geom === 'number' ? json.alt_geom : json.baro
+    //     const altitudeM = typeof altitudeFt === 'number' ? 0.3048 * altitudeFt : null;
+    //     const onGround = altitudeM === 0 ? true : false;
+
+    //     // True, if positional data is complete (for plotting); hex is needed for unique id
+
+
+    //     return { 'id': id, 'positionKnown': positionKnown, 'hex': hex, 'flight': flight, 'lon': lon, 'lat': lat, 'altitudeFt': altitudeFt, 'altitudeM': altitudeM, 'onGround': onGround }
+    // },
+
+    stateAddedListener: function (ev) {
+        if (ev.detail === 'dead') {
+            const entityEl = ev.target;
+            console.log("State dead was added to " + entityEl.components.aircraft.id);
+            entityEl.parentNode.removeChild(entityEl);
+            entityEl.destroy();
+        }
+    },
+
+    dataUpdatedListener: function (ev) {
+        var entityEl = ev.target;
+        var aircraft = entityEl.components.aircraft;
+        entityEl.setAttribute('label', { flight: aircraft.flight, altitude: aircraft.altitude })
+    },
+
+    _purgeFlightPool: function () {
+        var aircraftEls = this.el.querySelectorAll('a-aircraft');
+
+        aircraftEls.forEach((aircraft) => {
+            if (aircraft.is('dead')) { (console.log(aircraft.components.aircraft)) }
+        });
+
+        console.log("Flight pool purged")
+    },
+
+    // tick: function (time, timeDelta) {
+    //     if (time - this.lastPurge > this.data.purgePeriod * 1000) {
+    //         this._purgeFlightPool()
+    //         this.lastPurge = time;
+    //     }
+    // }
 });
