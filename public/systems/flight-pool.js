@@ -31,11 +31,7 @@ AFRAME.registerSystem('flight-pool', {
 
         // aircraftEl.setAttribute('geometry', { primitive: 'aircraft', model: 'arrow' });
         aircraftEl.setAttribute('id', id);
-        // aircraftEl.setAttribute('flight', flight);
-        // aircraftEl.setAttribute('flight-path', { newGpsPosition: `${ac.lat} ${ac.lon} ${ac.atitudeM}` });
-        // aircraftEl.setAttribute('fixed-wing', { onGround: ac.onGround });
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
-
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
 
@@ -52,13 +48,7 @@ AFRAME.registerSystem('flight-pool', {
             const id = this.idFromHex(json.hex);
             if (id === null) return
 
-            const flight = json.flight ? json.flight.trim() : null;
-            // const positionKnown = json.lon && json.lat && (typeof json.altitude === "number") ? true : false;
-
-            var aircraftEl = this.el.querySelector(`#${id}`);
-
-            // Update only if position is known
-            // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
+            var aircraftEl = this.el.querySelector(`#${id}`); // Check if aircraft element already exists
             if (aircraftEl) {
                 aircraftEl.components.aircraft.updateData(aircraftJson.now, json);  // In this moment the aircraft state can change to 'dead' and the stateAddedListener will immediately delete it!
             } else {
@@ -74,27 +64,6 @@ AFRAME.registerSystem('flight-pool', {
         const hexCleaned = hex.startsWith("~") ? hex.substring(2) : hex
         return `id_${hexCleaned}`
     },
-
-    // _fromJson: function (json) {
-    //     // Parse one entry of aircraft.json file to a planeObject.
-
-
-
-    //     if (this.idFromHex(hex) === null) return {}
-
-    //     const hex = json.hex
-    //     const flight = json.flight ? json.flight.trim() : null;
-    //     const lon = json.lon;
-    //     const lat = json.lat;
-    //     const altitudeFt = typeof json.alt_geom === 'number' ? json.alt_geom : json.baro
-    //     const altitudeM = typeof altitudeFt === 'number' ? 0.3048 * altitudeFt : null;
-    //     const onGround = altitudeM === 0 ? true : false;
-
-    //     // True, if positional data is complete (for plotting); hex is needed for unique id
-
-
-    //     return { 'id': id, 'positionKnown': positionKnown, 'hex': hex, 'flight': flight, 'lon': lon, 'lat': lat, 'altitudeFt': altitudeFt, 'altitudeM': altitudeM, 'onGround': onGround }
-    // },
 
     stateAddedListener: function (ev) {
         if (ev.detail === 'dead') {
