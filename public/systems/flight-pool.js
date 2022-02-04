@@ -42,6 +42,9 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     updateAircraftElements: function (aircraftJson) {
+
+        this._purgeFlightPool(aircraftJson.now);
+
         // Update positions of known aircraft or create new a-aircraft entities from aircraft.json contents.
         aircraftJson.aircraft.forEach((json) => {
             // We need a valid hexid to uniquely identify the aircraft for later updates
@@ -80,14 +83,46 @@ AFRAME.registerSystem('flight-pool', {
         entityEl.setAttribute('label', { flight: aircraft.flight, altitude: aircraft.altitude })
     },
 
-    _purgeFlightPool: function () {
+    _purgeFlightPool: function (now) {
         var aircraftEls = this.el.querySelectorAll('a-aircraft');
 
-        aircraftEls.forEach((aircraft) => {
-            if (aircraft.is('dead')) { (console.log(aircraft.components.aircraft)) }
+        aircraftEls.forEach((aircraftEl) => {
+            var aircraft = aircraftEl.components.aircraft;
+
+            if (aircraft.last_message_timestamp) { aircraft.seen = now - aircraft.last_message_timestamp; }
+            if (aircraft.last_position_timestamp) { aircraft.seen_pos = now - aircraft.last_position_timestamp; }
+
+            // If no packet in over 58 seconds, mark as dead and ready for removal.
+            if (aircraft.seen > 58) {
+                aircraftEl.addState('stale');
+                aircraft.visible = false;
+            } else {
+                if (aircraft.seen_pos < 60) {
+                    aircraft.visible = true;
+                    // if (this.updateTrack(now, last_timestamp)) {
+                    if (aircraft.moved(now, aircraft.LastReceiverTimestamp)) {
+                        // this.updateLines();
+                        aircraft.updateMaterial();
+                    } else {
+                        aircraft.updateMaterial(); // didn't move
+                    }
+                } else {
+                    aircraftEl.addState('dead');
+                }
+            }
+
+
         });
 
         console.log("Flight pool purged")
+    },
+
+    /**
+     * Based on age of last update, manage airplane and track visibility. 
+     * TODO: Move this logic to flight-pool component
+     */
+    updateTick: function (receiver_timestamp, last_timestamp) {
+
     },
 
     // tick: function (time, timeDelta) {

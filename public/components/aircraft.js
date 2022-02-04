@@ -106,8 +106,8 @@ AFRAME.registerComponent('aircraft', {
 
 
         // When was this last updated (receiver timestamp)
-        this.last_message_time = null;
-        this.last_position_time = null;
+        this.last_message_timestamp = null;
+        this.last_position_timestamp = null;
 
         // When was this last updated (seconds before last update)
         this.seen = null;
@@ -216,7 +216,8 @@ AFRAME.registerComponent('aircraft', {
         // Update all of our data
         this.messages = data.messages;
         this.rssi = data.rssi;
-        this.last_message_time = receiver_timestamp - data.seen;
+        this.last_message_timestamp = receiver_timestamp;
+
 
         // simple fields
 
@@ -248,7 +249,7 @@ AFRAME.registerComponent('aircraft', {
 
         if ('lat' in data && 'lon' in data) {
             this.position = [data.lon, data.lat];
-            this.last_position_time = receiver_timestamp - data.seen_pos;
+            this.last_position_timestamp = receiver_timestamp - data.seen_pos;
 
             if (SitePosition !== null) {
                 this.sitedist = ol.sphere.getDistance(SitePosition, this.position);
@@ -264,6 +265,7 @@ AFRAME.registerComponent('aircraft', {
                 }
             }
         }
+
 
         // Pick an altitude
         if ('alt_baro' in data) {
@@ -308,7 +310,6 @@ AFRAME.registerComponent('aircraft', {
         if (this.position) {
             this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
         }
-        this.updateTick(receiver_timestamp, this.LastReceiverTimestamp)
         this.LastReceiverTimestamp = receiver_timestamp;
 
         if (!this.el.is('dead')) {
@@ -334,33 +335,7 @@ AFRAME.registerComponent('aircraft', {
         else return true
     },
 
-    /**
-    * Based on age of last update, manage airplane and track visibility. 
-    * TODO: Move this logic to flight-pool component
-    */
-    updateTick: function (receiver_timestamp, last_timestamp) {
-        // recompute seen and seen_pos
-        this.seen = receiver_timestamp - this.last_message_time;
-        this.seen_pos = (this.last_position_time === null ? null : receiver_timestamp - this.last_position_time);
 
-        // If no packet in over 58 seconds, mark as dead and ready for removal.
-        if (this.seen > 58) {
-            this.el.addState('stale');
-        } else {
-            if (this.position !== null && this.seen_pos < 60) {
-                this.visible = true;
-                // if (this.updateTrack(receiver_timestamp, last_timestamp)) {
-                if (this.moved(receiver_timestamp, last_timestamp)) {
-                    // this.updateLines();
-                    this.updateMaterial();
-                } else {
-                    this.updateMaterial(); // didn't move
-                }
-            } else {
-                this.el.addState('dead');
-            }
-        }
-    },
 
     /**
     * Update material properties.
