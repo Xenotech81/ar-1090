@@ -79,9 +79,13 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     dataUpdatedListener: function (ev) {
-        var entityEl = ev.target;
-        var aircraft = entityEl.components.aircraft;
-        entityEl.setAttribute('label', { flight: aircraft.flight, altitude: aircraft.altitude })
+        var aircraftEl = ev.target;
+        var aircraft = aircraftEl.components.aircraft;
+        aircraftEl.setAttribute('label', {
+            flight: aircraft.flight,
+            altitude: aircraft.altitude,
+            distance: aircraftEl.getAttribute('distance')
+        })
     },
 
     _purgeFlightPool: function (now) {
