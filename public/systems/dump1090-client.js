@@ -28,9 +28,15 @@ AFRAME.registerSystem('dump1090-client', {
 
         fetch(RECEIVER_ROUTE)
             .then((res) => res.json())
-            .then(receiver => this.receiver = receiver)
-
-        this.el.dispatchEvent(new CustomEvent('dump1090-client-connected'));  // Inform that initialisation finished
+            .then(receiver => { this.receiver = receiver; return receiver })
+            .then(receiver => {
+                console.log("Connected to dump1090 instance: lat: %s, lon: %s, refresh rate: %ss, version: %s",
+                    receiver.lat,
+                    receiver.lon,
+                    receiver.refresh / 1000,
+                    receiver.version);
+                this.el.dispatchEvent(new CustomEvent('dump1090-client-connected'));  // Inform that initialisation finished
+            })
     },
 
     update: function (oldData) {
