@@ -23,6 +23,8 @@ AFRAME.registerSystem('dump1090-client', {
     init: function () {
         let _poller = null;
         this.receiver = null;  // Receiver info: version, refresh [ms], history [s], lat, lon
+        this.StaleReceiverCount = 0;
+        this.LastReceiverTimestamp = 0;
 
         fetch(RECEIVER_ROUTE)
             .then((res) => res.json())
@@ -38,8 +40,11 @@ AFRAME.registerSystem('dump1090-client', {
 
         this._poller = setInterval(() => fetch(AIRCRAFT_ROUTE)
             .then((res) => res.json())
-            .then(aircraft => this.el.dispatchEvent(new CustomEvent('dump1090-data-received', { detail: { aircraftJson: aircraft } })))
-            .catch(err => console.error("Failed fething aircraft.json: " + err)),
+            .then(aircraftJson => {
+                this.el.dispatchEvent(new CustomEvent('dump1090-data-received', { detail: aircraftJson }));
+                this.checkStaleReceiver(aircraftJson.now);
+            })
+            .catch(err => console.error("Failed fetching aircraft.json: " + err)),
             this.data.pollInterval * 1000);
     },
 
@@ -47,5 +52,20 @@ AFRAME.registerSystem('dump1090-client', {
         return fetch(HISTORY_ROUTE)
             .then((res) => res.json())
             .then(history => { return history })
-    }
+    },
+
+    checkStaleReceiver: function (now) {
+        // https://github.com/flightaware/dump1090/blob/v7.1/public_html/script.js
+
+        if (this.LastReceiverTimestamp === now) {
+            this.StaleReceiverCount++;
+            if (this.StaleReceiverCount > 5) {
+                console.log("The data from dump1090 hasn't been updated in a while. Maybe dump1090 is no longer running?");
+            }
+        } else {
+            this.StaleReceiverCount = 0;
+            this.LastReceiverTimestamp = now;
+        }
+    },
+
 });

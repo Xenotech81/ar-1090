@@ -20,7 +20,7 @@ AFRAME.registerSystem('flight-pool', {
         this.lastPurge = 0;
 
         // Register event listeners
-        scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail.aircraftJson))
+        scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail))
     },
 
     _createAircraftElement: function (id, json) {
@@ -47,7 +47,7 @@ AFRAME.registerSystem('flight-pool', {
 
     updateAircraftElements: function (aircraftJson) {
         // Update positions of known aircraft or create new a-aircraft entities from aircraft.json contents.
-        aircraftJson.forEach((json) => {
+        aircraftJson.aircraft.forEach((json) => {
             // We need a valid hexid to uniquely identify the aircraft for later updates
             const id = this.idFromHex(json.hex);
             if (id === null) return
@@ -60,7 +60,7 @@ AFRAME.registerSystem('flight-pool', {
             // Update only if position is known
             // Note: Event 'gps-entity-place-added' is dispatched by the init() of gps-projected-entity-place
             if (aircraftEl) {
-                aircraftEl.components.aircraft.updateData(Date.now(), json);  // In this moment the aircraft state can change to 'dead' and the stateAddedListener will immediately delete it!
+                aircraftEl.components.aircraft.updateData(aircraftJson.now, json);  // In this moment the aircraft state can change to 'dead' and the stateAddedListener will immediately delete it!
             } else {
                 this._createAircraftElement(id, json)
             }

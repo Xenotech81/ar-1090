@@ -4,12 +4,8 @@ var extendDeep = AFRAME.utils.extendDeep;
 // This makes the material component a default component and maps all the base material properties.
 var meshMixin = AFRAME.primitives.getMeshMixin();
 
-// var planeObject = require('../lib/planeObject');
-
 // Constants overwrite
 const SitePosition = null;
-var LastReceiverTimestamp = 0;
-var StaleReceiverCount = 0;
 
 var SpecialSquawks = {
     '7500': { cssClass: 'squawk7500', markerColor: 'rgb(255, 85, 85)', text: 'Aircraft Hijacking' },
@@ -313,20 +309,6 @@ AFRAME.registerComponent('aircraft', {
         }
         this.updateTick(receiver_timestamp, this.LastReceiverTimestamp)
         this.LastReceiverTimestamp = receiver_timestamp;
-
-        // Check for stale receiver data (TODO: This must move to dump1090-receiver component)
-        // https://github.com/flightaware/dump1090/blob/v7.1/public_html/script.js
-        // var now = data.now;  // now property of JSON returned from dump1090
-        var now = Date.now();
-        if (LastReceiverTimestamp === now) {
-            StaleReceiverCount++;
-            if (StaleReceiverCount > 5) {
-                console.log("The data from dump1090 hasn't been updated in a while. Maybe dump1090 is no longer running?");
-            }
-        } else {
-            StaleReceiverCount = 0;
-            LastReceiverTimestamp = now;
-        }
 
         if (!this.el.is('dead')) {
             this.el.dispatchEvent(new CustomEvent('data-updated'));

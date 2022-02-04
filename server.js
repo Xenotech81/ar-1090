@@ -30,7 +30,7 @@ app.get('/', (_, res) => {
 // https://xpertphp.com/node-js-axios-http-get-request-example/
 app.get('/aircraft', (_, res) => {
     axios.get(DUMP10190_DATA_URL + "/aircraft.json")
-        .then((response) => { res.json(response.data.aircraft); })
+        .then((response) => { res.json(response.data); })
         .catch((err) => {
             console.error(err);
             res.status('500').end(`Failed retrieving aircraft.json from ${DUMP10190_DATA_URL}`);
