@@ -273,6 +273,7 @@ AFRAME.registerComponent('aircraft', {
         } else {
             this.altitude = null;
         }
+        if (this.altitude === "ground") { this.el.addState('onground') }
 
         // Pick a selected altitude
         if ('nav_altitude_fms' in data) {
@@ -316,10 +317,10 @@ AFRAME.registerComponent('aircraft', {
     },
 
     /**
-    * Transform feet into meter.
+    * Transform feet into meter; pay attention to 'ground' altitude
     */
     f2m(ft) {
-        return ft * 0.3048;
+        return ft === "ground" ? 0 : ft * 0.3048;
     },
 
     /**
