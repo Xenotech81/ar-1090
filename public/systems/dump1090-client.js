@@ -38,7 +38,8 @@ AFRAME.registerSystem('dump1090-client', {
 
         this._poller = setInterval(() => fetch(AIRCRAFT_ROUTE)
             .then((res) => res.json())
-            .then(aircraft => this.el.dispatchEvent(new CustomEvent('dump1090-data-received', { detail: { aircraftJson: aircraft } }))),
+            .then(aircraft => this.el.dispatchEvent(new CustomEvent('dump1090-data-received', { detail: { aircraftJson: aircraft } })))
+            .catch(err => console.error("Failed fething aircraft.json: " + err)),
             this.data.pollInterval * 1000);
     },
 
