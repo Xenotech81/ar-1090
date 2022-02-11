@@ -13,18 +13,21 @@
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <script
         src="https://unpkg.com/aframe-environment-component@1.2.0/dist/aframe-environment-component.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script> -->
     <script
         src="https://raw.githack.com/andreasplesch/aframe-meshline-component/master/dist/aframe-meshline-component.min.js"></script>
-    <script src="./libs/gps-projected-entity-place.js" defer></script>
-    <script src="./components/curve.js"></script>
+    <script src="./libs/my-gps-projected-entity-place.js" defer></script>
+    <script src="./systems/world-scale.js"></script>
+    <script src="./systems/dump1090-client.js"></script>
+    <script src="./systems/flight-pool.js"></script>
+    <!-- <script src="./components/curve.js"></script> -->
     <script src="./components/label.js"></script>
     <script src="./components/cursor-listener.js"></script>
     <script src="./components/flight-path.js"></script>
     <script src="./components/fixed-wing.js"></script>
+    <script src="./components/aircraft.js"></script>
     <script src="./geometries/aircraft.js"></script>
-    <script src="./styles/flightaware.js"></script>
-    <script src="./systems/dump1090-poll-client.js" type="module"></script>
+    <script src="./flightaware/styles.js"></script>
 </head>
 
 <body style='margin: 0; overflow: hidden;'>
@@ -36,7 +39,8 @@
     </div>
 
     <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
-        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;' dump1090-poll-client='sceneScale: 0.01;'>
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'
+        world-scale='distanceScale: 0.01; objectScale: 6; enlargeFarObjects: true' dump1090-client flight-pool>
 
         <a-assets>
             <a-mixin id="range-ring-mixin" material='color: teal; side: double; transparent: true; opacity: 0.5;'

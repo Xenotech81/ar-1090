@@ -4,7 +4,7 @@ AFRAME.registerGeometry('aircraft', {
 
     init: function (data) {
         // Model orientation vector in model space (will be used for rotation later)
-        var MODEL_ORIENTATION;
+        var MODEL_ORIENTATION = null;
 
         if (data.model === 'arrow') {
             this.geometry = this._getArrowGeometry();
@@ -40,14 +40,14 @@ AFRAME.registerGeometry('aircraft', {
 
         // orient the geometry into x/z-plane, roughly centered
         const matrix = new THREE.Matrix4()
-            .makeRotationX(Math.PI / 2)
-            .setPosition(new THREE.Vector3(0, 6, 0));
+            .makeRotationX(-Math.PI / 2)  // Point north by default
+            .setPosition(new THREE.Vector3(0, 0, 0));
 
         arrowGeometry.applyMatrix(matrix);
-        this.MODEL_ORIENTATION = new THREE.Vector3(0, 0, 1);
+        this.MODEL_ORIENTATION = new THREE.Vector3(0, 0, -1);
 
         return arrowGeometry
-    }
+    },
 });
 
 

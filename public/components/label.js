@@ -1,7 +1,7 @@
 AFRAME.registerComponent('label', {
 
     schema: {
-        callsign: { default: '' },
+        flight: { default: '' },
         altitude: { type: 'number' },
         distance: { type: 'number' },
         visible: { default: true },
@@ -10,20 +10,20 @@ AFRAME.registerComponent('label', {
 
     init: function () {
         let infoLabel = null;
-        let callsign = this.data.callsign;
+        let flight = this.data.flight;
     },
 
     update: function () {
         var data = this.data;
 
         if (!this.infoLabel) {
-            this.infoLabel = this._createLabel(data.callsign, data.altitude, data.distance);
+            this.infoLabel = this._createLabel(data.flight, data.altitude, data.distance);
             this.el.appendChild(this.infoLabel);
             this.el.addEventListener('click', this._clickListener.bind(this));
         }
 
         if (this.infoLabel.hasLoaded) {
-            this.infoLabel.querySelector('.infoLabelCallsign').setAttribute('value', data.callsign);
+            this.infoLabel.querySelector('.infoLabelCallsign').setAttribute('value', data.flight);
             this.infoLabel.querySelector('.infoLabelAltitude').setAttribute('value', this._altitudeStr(data.altitude));
             this.infoLabel.querySelector('.infoLabelDistance').setAttribute('value', this._distanceStr(data.distance));
 
@@ -33,7 +33,7 @@ AFRAME.registerComponent('label', {
         }
     },
 
-    _createLabel: function (callsign, altitude, distance) {
+    _createLabel: function (flight, altitude, distance) {
 
         let labelEl = document.createElement('a-entity');
         labelEl.setAttribute('scale', '120 120 120');
@@ -42,7 +42,7 @@ AFRAME.registerComponent('label', {
 
         let callsignEl = document.createElement('a-text');
         callsignEl.setAttribute('class', 'infoLabelCallsign clickable');
-        callsignEl.setAttribute('value', callsign);
+        callsignEl.setAttribute('value', flight);
         callsignEl.setAttribute('position', '0 0.5 0');
         callsignEl.setAttribute('align', 'center');
         callsignEl.setAttribute('scale', '1.5 1.5 1.5');
@@ -85,9 +85,9 @@ AFRAME.registerComponent('label', {
 
     _altitudeStr: function (altitudeM) {
         var altitudeStr = 'ALT: --- km';
-        if (altitudeM && altitudeM < 1000) {
+        if (altitudeM && altitudeM < 3000) {
             altitudeStr = `ALT: ${altitudeM.toFixed(0)}m`
-        } else if (altitudeM && altitudeM > 1000) {
+        } else if (altitudeM && altitudeM > 3000) {
             altitudeStr = `ALT: ${(altitudeM / 1000).toFixed(1)}km`
         }
         return altitudeStr;
