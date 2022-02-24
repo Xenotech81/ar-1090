@@ -1,3 +1,5 @@
+import ColorByAlt from '../libs/flightaware/styles';
+
 var extendDeep = AFRAME.utils.extendDeep;
 
 // The mesh mixin provides common material properties for creating mesh-based primitives.

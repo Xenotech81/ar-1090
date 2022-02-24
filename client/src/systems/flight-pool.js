@@ -8,6 +8,10 @@
  * - Adds new appearing aircraft to pool; deletes stale aircraft from pool
  * 
  */
+
+import ColorByAlt from '../libs/flightaware/styles'
+
+
 AFRAME.registerSystem('flight-pool', {
     // dependencies: ['dump1090-client'], // flight-path, label, fixed-wing
 

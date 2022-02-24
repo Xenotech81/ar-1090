@@ -1,0 +1,26 @@
+{
+  "name": "ar1090-client",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Web client for the AR1090 project",
+  "main": "dist/bundle.js",
+  "scripts": {
+    "start": "webpack serve  --config webpack.dev.js --open",
+    "build": "webpack --config webpack.prod.js && mv dist ../public"
+  },
+  "author": "Alexander Radi",
+  "license": "ISC",
+  "devDependencies": {
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.69.1",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4",
+    "webpack-merge": "^5.8.0"
+  },
+  "dependencies": {
+    "@ar-js-org/ar.js": "^3.3.3-es6-beta-01",
+    "aframe": "^1.2.0",
+    "aframe-look-at-component": "^0.8.0",
+    "three": "^0.128.0"
+  }
+}
