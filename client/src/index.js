@@ -8,3 +8,5 @@ import "./components/flight-path"
 import "./components/fixed-wing"
 import "./components/aircraft"
 import "./geometries/aircraft"
+
+import css from "./index.css";
