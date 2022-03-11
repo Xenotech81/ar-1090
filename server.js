@@ -11,7 +11,7 @@ const app = express();
 app.use(express.static('public'))
 
 const DUMP10190_DATA_URL = process.env.DUMP10190_DATA_URL || "http://localhost/skyaware/data"
-const PORT = process.env.PORT || 4444
+const PORT = process.env.PORT || 5000
 
 var options = {
     key: fs.readFileSync('./ssl/key_unencrypted.pem'),

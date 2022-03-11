@@ -4,9 +4,11 @@
   "description": "Augmented Reality dump-1090 visualizer",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server \"  \"npm run client\"",
+    "build": "npm run build --prefix client",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alex Radi",
   "license": "ISC",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@types/dat.gui": "^0.7.7",
+    "concurrently": "^7.0.0",
     "dat.gui": "^0.7.7",
     "nodemon": "^2.0.15"
   }

@@ -1,6 +1,6 @@
 // https://github.com/flightaware/dump1090/blob/v7.1/public_html/planeObject.js
 // ATTENTION: Altitude in feet, to match ColorByAlt!
-getAltitudeColor = function (altitude) {
+const getAltitudeColor = function (altitude) {
     var h, s, l;
 
     // if (typeof altitude === 'undefined') {
@@ -51,7 +51,7 @@ getAltitudeColor = function (altitude) {
 }
 
 
-getMarkerColor = function () {
+const getMarkerColor = function () {
     // Emergency squawks override everything else
     // if (this.squawk in SpecialSquawks)
     //     return SpecialSquawks[this.squawk].markerColor;
@@ -107,7 +107,7 @@ getMarkerColor = function () {
 
 
 // return the styling of the lines based on altitude
-altitudeLines = function (altitude) {
+const altitudeLines = function (altitude) {
     var colorArr = getAltitudeColor(altitude);
     return 'hsl(' + (colorArr[0] / 5).toFixed(0) * 5 + ',' + (colorArr[1] / 5).toFixed(0) * 5 + '%,' + (colorArr[2] / 5).toFixed(0) * 5 + '%)'
 }
@@ -120,13 +120,13 @@ altitudeLines = function (altitude) {
 // metric (m, km, km/h) or imperial (ft, mi, mph) units are used in the 
 // plane table and in the detailed plane info. Valid values are
 // "nautical", "metric", or "imperial".
-DisplayUnits = "metric";
+const DisplayUnits = "metric";
 
 // -- Marker settings -------------------------------------
 
 // These settings control the coloring of aircraft by altitude.
 // All color values are given as Hue (0-359) / Saturation (0-100) / Lightness (0-100)
-ColorByAlt = {
+const ColorByAlt = {
     // HSL for planes with unknown altitude:
     unknown: { h: 0, s: 0, l: 40 },
 
@@ -163,3 +163,6 @@ ColorByAlt = {
     // Changes added to the color of planes that have positions from mlat
     mlat: { h: 0, s: -10, l: -10 }
 };
+
+
+export default ColorByAlt;
