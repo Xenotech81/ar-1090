@@ -164,5 +164,11 @@ const ColorByAlt = {
     mlat: { h: 0, s: -10, l: -10 }
 };
 
+const SpecialSquawks = {
+    '7500': { cssClass: 'squawk7500', markerColor: 'rgb(255, 85, 85)', text: 'Aircraft Hijacking' },
+    '7600': { cssClass: 'squawk7600', markerColor: 'rgb(0, 255, 255)', text: 'Radio Failure' },
+    '7700': { cssClass: 'squawk7700', markerColor: 'rgb(255, 255, 0)', text: 'General Emergency' }
+};
 
-export default ColorByAlt;
+
+export { ColorByAlt, SpecialSquawks };

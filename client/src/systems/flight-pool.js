@@ -9,7 +9,7 @@
  * 
  */
 
-import ColorByAlt from '../libs/flightaware/styles'
+import { ColorByAlt } from '../libs/flightaware/styles'
 
 
 AFRAME.registerSystem('flight-pool', {
