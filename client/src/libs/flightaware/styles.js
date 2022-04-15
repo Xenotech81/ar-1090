@@ -171,4 +171,4 @@ const SpecialSquawks = {
 };
 
 
-export { ColorByAlt, SpecialSquawks };
+export { ColorByAlt, SpecialSquawks, altitudeLines };

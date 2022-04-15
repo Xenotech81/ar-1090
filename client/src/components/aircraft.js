@@ -27,7 +27,7 @@ const SitePosition = null;
  * and NOT by updating through the schema.
  */
 AFRAME.registerComponent('aircraft', {
-    dependencies: ['my-gps-projected-entity-place'],
+    dependencies: ['my-gps-projected-entity-place', 'flight-path'],
 
     schema: {
         // Will be used as unique id of this entity
@@ -153,6 +153,12 @@ AFRAME.registerComponent('aircraft', {
         this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.data.lat}; longitude: ${this.data.lon}; altitude: ${this.data.altitude}`);
     },
 
+    remove: function () {
+        this.el.removeAttribute('my-gps-projected-entity-place')
+        this.el.removeAttribute('flight-path')
+        console.log("REMOVED")
+    },
+
     /**
     * Return true if entity is filtered out from view, eg due to altitude filter.
     * 
@@ -271,6 +277,8 @@ AFRAME.registerComponent('aircraft', {
         } else {
             this.altitude = null;
         }
+
+        // todo: Switch between onground and airborne states instead
         if (this.altitude === "ground") { this.el.addState('onground') }
 
         // Pick a selected altitude
@@ -307,10 +315,16 @@ AFRAME.registerComponent('aircraft', {
             this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
         }
 
-
-
         if (!this.el.is('dead')) {
             this.el.dispatchEvent(new CustomEvent('data-updated'));
+        }
+
+        this.updateMaterial();
+
+        if (this.position) {
+            this.el.setAttribute('flight-path', {
+                newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
+            });
         }
     },
 
@@ -475,8 +489,8 @@ AFRAME.registerComponent('aircraft', {
 AFRAME.registerPrimitive('a-aircraft', extendDeep({}, meshMixin, {
     defaultComponents: {
         aircraft: {},
-        // geometry: { primitive: 'aircraft', model: 'arrow' },
-        geometry: { primitive: 'sphere', radius: 15 },
+        geometry: { primitive: 'aircraft', model: 'arrow' },
+        //geometry: { primitive: 'sphere', radius: 15 },
     },
 
     mappings: {
