@@ -20,11 +20,12 @@ AFRAME.registerSystem('flight-pool', {
     },
 
     init: function () {
-        var scene = this.el;  // In a system el is a reference to the scene
-        this.lastPurge = 0;
+        this.scene = this.el;  // In a system el is a reference to the scene
+        // Delete Aircraft element only after its dead state (seen_pos attribute) has this age
+        this.DEAD_GRACE_PERIOD = 300;  // sec
 
         // Register event listeners
-        scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail))
+        this.scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail))
     },
 
     _createAircraftElement: function (id, json) {
@@ -38,17 +39,19 @@ AFRAME.registerSystem('flight-pool', {
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
-        aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
-        aircraftEl.addEventListener('data-updated', ev => this.dataUpdatedListener(ev));
+        // todo: Add label as component: aircraftEl.setAttribute('label', {});
+        // aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
+        aircraftEl.addEventListener('data-updated', ev => this.updateLabel(ev));
 
         this.el.appendChild(aircraftEl)
     },
 
     updateAircraftElements: function (aircraftJson) {
 
-        // this._purgeFlightPool(aircraftJson.now);
+        // todo: Update ALL aircraft in the pool, even if not update came in from dump1090. Because each 
+        // aircraft must keep its seen and seen_pos attributes up-to date such that its stale and dead states can change
 
-        // Update positions of known aircraft or create new a-aircraft entities from aircraft.json contents.
+        // Update positions of known aircraft or create new a-aircraft entities from aircraft.json
         aircraftJson.aircraft.forEach((json) => {
             // We need a valid hexid to uniquely identify the aircraft for later updates
             const id = this.idFromHex(json.hex);
@@ -56,12 +59,21 @@ AFRAME.registerSystem('flight-pool', {
 
             var aircraftEl = this.el.querySelector(`#${id}`); // Check if aircraft element already exists
             if (aircraftEl) {
-                var ac = aircraftEl.components.aircraft;
-                if (ac) {  // Check for ac, as it might have been destroyed meanwhile by _purgeFlightPool()
-                    ac.updateData(aircraftJson.now, json);  // In this moment the aircraft state can change to 'dead' and the stateAddedListener will immediately delete it!
-                }
+                aircraftEl.components.aircraft.updateData(aircraftJson.now, json);
             } else {
                 this._createAircraftElement(id, json)
+            }
+        })
+
+        this.purge();  // Delete dead aircraft
+    },
+
+    purge: function () {
+        const aircraftEls = this.el.querySelectorAll('a-aircraft');
+
+        aircraftEls.forEach((aircraftEl) => {
+            if (aircraftEl.components.aircraft.seen_pos > this.DEAD_GRACE_PERIOD) {
+                this._destroyAircraft(aircraftEl);
             }
         })
     },
@@ -74,17 +86,8 @@ AFRAME.registerSystem('flight-pool', {
         return `id_${hexCleaned}`
     },
 
-    stateAddedListener: function (ev) {
-        if (ev.detail === 'dead') {
-            const entityEl = ev.target;
-            console.log("State dead was added to " + entityEl.components.aircraft.id);
-            entityEl.parentNode.removeChild(entityEl);
-            entityEl.destroy();
-            console.log("Aircraft destroyed")
-        }
-    },
-
-    dataUpdatedListener: function (ev) {
+    updateLabel: function (ev) {
+        // todo: Add label as component to the aircraft element: aircraftEl.setAttribute('label', {});
         var aircraftEl = ev.target;
         var aircraft = aircraftEl.components.aircraft;
         aircraftEl.setAttribute('label', {
@@ -94,53 +97,9 @@ AFRAME.registerSystem('flight-pool', {
         })
     },
 
-    _purgeFlightPool: function (now) {
-        const aircraftEls = this.el.querySelectorAll('a-aircraft');
-
-        aircraftEls.forEach((aircraftEl) => {
-            let aircraft = aircraftEl.components.aircraft;
-
-            if (aircraft) {  // Check for ac, as it might have been destroyed meanwhile by _purgeFlightPool()
-                if (aircraft.last_message_timestamp) { aircraft.seen = now - aircraft.last_message_timestamp; }
-                if (aircraft.last_position_timestamp) { aircraft.seen_pos = now - aircraft.last_position_timestamp; }
-
-                // If no packet in over 58 seconds, mark as dead and ready for removal.
-                if (aircraft.seen > 58) {
-                    aircraftEl.addState('stale');
-                    aircraft.visible = false;
-                } else {
-                    if (aircraft.seen_pos > 60) {
-                        console.log("Adding dead state to " + aircraft.id)
-                        console.log(aircraft.seen_pos)
-                        // aircraftEl.addState('dead');
-                        aircraftEl.remove()
-                    }
-                }
-            }
-
-        });
-
-        console.log("Flight pool purged")
-    },
-
     _destroyAircraft: function (aircraftEl) {
         this.el.removeChild(aircraftEl);  // remove from scene
         aircraftEl.destroy();
         console.log("Aircraft destroyed")
     },
-
-    /**
-     * Based on age of last update, manage airplane and track visibility. 
-     * TODO: Move this logic to flight-pool component
-     */
-    updateTick: function (receiver_timestamp, last_timestamp) {
-
-    },
-
-    // tick: function (time, timeDelta) {
-    //     if (time - this.lastPurge > this.data.purgePeriod * 1000) {
-    //         this._purgeFlightPool()
-    //         this.lastPurge = time;
-    //     }
-    // }
 });

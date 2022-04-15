@@ -50,6 +50,10 @@ AFRAME.registerComponent('aircraft', {
     },
 
     init: function () {
+        this.STALE_TIMEOUT = 15;  // sec
+        this.DEAD_TIMEOUT = 58;  // sec
+        this.dead_since = 0;  // Age of last dead state declaration
+
         // Unique id of this aircraft entity
         this.id = this.data.id;
 
@@ -222,6 +226,9 @@ AFRAME.registerComponent('aircraft', {
         this.rssi = data.rssi;
         this.last_message_timestamp = receiver_timestamp;
 
+        this.seen = data.seen;
+        this.seen_pos = data.seen_pos;
+
         // simple fields
         var fields = ["alt_baro", "alt_geom", "gs", "ias", "tas", "track",
             "track_rate", "mag_heading", "true_heading", "mach",
@@ -320,11 +327,41 @@ AFRAME.registerComponent('aircraft', {
         }
 
         this.updateMaterial();
+        this.updateState();
 
-        if (this.position) {
-            this.el.setAttribute('flight-path', {
-                newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
-            });
+        // if (this.position) {
+        //     this.el.setAttribute('flight-path', {
+        //         newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
+        //     });
+        // }
+    },
+
+    /**
+     * updateState
+     * 
+     * Add stale and dead state to this Aircraft element depending on the values of
+     * seen and seen_pos attributes.
+     * 
+     */
+    updateState() {
+
+        if (this.seen >= this.STALE_TIMEOUT && !this.el.is('stale')) {
+            // console.log("Adding stale state to " + this.flight + " seen: " + this.seen)
+            this.el.addState('stale');
+        } else if (this.seen < this.STALE_TIMEOUT && this.el.is('stale')) {
+            // console.log("Removing stale state from " + this.flight + " seen: " + this.seen)
+            this.el.removeState('stale');
+        }
+
+        // If no packet in over DEAD_TIMEOUT seconds, mark as dead and ready for removal.
+        if (this.seen_pos >= this.DEAD_TIMEOUT && !this.el.is('dead')) {
+            console.log("Adding dead state to " + this.flight + " seen_pos: " + this.seen_pos)
+            this.el.addState('dead');
+            this.dead_since = this.seen_pos;
+        } else if (this.seen_pos < this.DEAD_TIMEOUT && this.el.is('dead')) {
+            console.log("Removing dead state from " + this.flight + " seen_pos: " + this.seen_pos)
+            this.el.removeState('dead');
+            this.dead_since = this.seen_pos;
         }
     },
 
@@ -385,7 +422,7 @@ AFRAME.registerComponent('aircraft', {
         l = colorArr[2];
 
         // If we have not seen a recent position update, change color
-        if (this.seen_pos > 15) {
+        if (this.seen_pos > this.STALE_TIMEOUT) {
             h += ColorByAlt.stale.h;
             s += ColorByAlt.stale.s;
             l += ColorByAlt.stale.l;
