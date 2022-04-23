@@ -1,12 +1,9 @@
 // Flight dynamics of fixed-wind aircraft
 AFRAME.registerComponent('fixed-wing', {
-    //dependencies: ['flight-path'],
 
     schema: {
         onGround: { default: false },
     },
-
-    _gpsTrack: null,
 
     init: function () {
         // Closure to access fresh `this.data` from event handler context.
@@ -14,7 +11,8 @@ AFRAME.registerComponent('fixed-wing', {
         var data = this.data;
         var el = this.el;  // Reference to the component's entity.
 
-        this._gpsTrack = el.components['flight-path']
+        this.prevPosition = null;  // Vector3 to previous aircraft position
+        this.orientation = new THREE.Vector3(0, 0, -1);  // Normalized orientation vector of last path segment (initiate pointing north)
 
         // Set up initial state and variables
         if (data.onGround) { el.addState('onGround') } else { el.addState('airborne') }
@@ -30,5 +28,21 @@ AFRAME.registerComponent('fixed-wing', {
             }
         });
 
+
+        // Rotate geometry according to aircraft new and past position vectors
+        el.addEventListener('componentchanged', function (evt) {
+            if (evt.detail.name === 'position') {
+                const newPosition = evt.target.getAttribute('position')
+
+                // If first ever position, then just store it and return
+                if (self.prevPosition === null) {
+                    self.prevPosition = newPosition.clone();
+                    return
+                }
+
+                self.orientation.copy(newPosition).sub(self.prevPosition).normalize();
+                el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), self.orientation));
+            }
+        });
     },
 });

@@ -16,7 +16,7 @@ AFRAME.registerSystem('flight-pool', {
     // dependencies: ['dump1090-client'], label
 
     schema: {
-        deadGracePeriod: { default: 120 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
+        deadGracePeriod: { default: 60 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
     },
 
     init: function () {
@@ -42,6 +42,7 @@ AFRAME.registerSystem('flight-pool', {
         aircraftEl.setAttribute('material', { color: ColorByAlt.unknown })
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
+        aircraftEl.setAttribute('fixed-wing', {});
         // todo: Add label as component: aircraftEl.setAttribute('label', {});
         // aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
         aircraftEl.addEventListener('data-updated', ev => this.updateLabelCallback(ev));

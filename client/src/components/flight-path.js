@@ -106,8 +106,6 @@ AFRAME.registerComponent('flight-path', {
 
             this._addCurvePoint(lat, lon, alt);
 
-            this._updateEntityOrientation();
-
             // this._setCurveColor(alt / 0.3048);
         }
         else return
@@ -118,18 +116,6 @@ AFRAME.registerComponent('flight-path', {
     */
     f2m(ft) {
         return ft === "ground" ? 0 : ft * 0.3048;
-    },
-
-    _updateEntityOrientation: function () {
-        // Derive orientation vector in world coordinates from latest lat/lon positions of gps track
-        if (this.worldPath.length < 2) { return }  // min 2 positions needed
-
-        var oldWorldPos = this.worldPath[this.worldPath.length - 2];
-        var newWorldPos = this.worldPath[this.worldPath.length - 1];
-
-        // Assume that geometry was originally pointing north: THREE.Vector3(0, 0, -1)
-        this.orientation.copy(newWorldPos).sub(oldWorldPos).normalize();
-        this.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), this.orientation));
     },
 
     _addCurvePoint(lat, lon, alt) {
