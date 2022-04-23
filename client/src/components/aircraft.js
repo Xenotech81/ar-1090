@@ -21,10 +21,10 @@ const SitePosition = null;
  * to ranslat the GPS position to three.js world position.
  * 
  * Example use from HTML:
- * <a-aircraft flight='abc123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
+ * <a-aircraft id='id_123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
  * 
- * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method, 
- * and NOT by updating through the schema.
+ * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method
+ * with json data delivered by dump1090-client, and NOT by updating it through the schema.
  */
 AFRAME.registerComponent('aircraft', {
     // dependencies: ['my-gps-projected-entity-place', 'flight-path'],
