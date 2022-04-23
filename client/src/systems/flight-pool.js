@@ -2,32 +2,35 @@
  * flight-pool system
  * 
  * Manages all visible flights:
- * - Listens to latest aircraft position update events from dump1090-poll-client system
+ * - Listens to latest aircraft position update events from dump1090-client system
  * - Performs initial population of the sky with a-aircraft entities
- * - Periodically updates position of all active aircraft
- * - Adds new appearing aircraft to pool; deletes stale aircraft from pool
- * 
+ * - Updates position of all aircraft when new data comes in from dump1090-client
+ * - Adds new aircraft to pool; deletes dead aircraft from pool
+ * - Updates the aircraft labels
  */
 
 import { ColorByAlt } from '../libs/flightaware/styles'
 
 
 AFRAME.registerSystem('flight-pool', {
-    // dependencies: ['dump1090-client'], // flight-path, label, fixed-wing
+    // dependencies: ['dump1090-client'], label
 
     schema: {
-        purgePeriod: { default: 3 }  // sec
+        deadGracePeriod: { default: 60 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
     },
 
     init: function () {
         this.scene = this.el;  // In a system el is a reference to the scene
         // Delete Aircraft element only after its dead state (seen_pos attribute) has this age
-        this.DEAD_GRACE_PERIOD = 300;  // sec
+        this.deadGracePeriod = this.data.deadGracePeriod;  // sec
 
         // Register event listeners
-        this.scene.addEventListener('dump1090-data-received', ev => this.updateAircraftElements(ev.detail))
+        this.scene.addEventListener('dump1090-data-received', ev => this.updatePoolCallback(ev.detail))
     },
 
+    /**
+     * Creat a new a-aircraft entity from dump1090 json data and attach to scene.
+     */
     _createAircraftElement: function (id, json) {
         const flight = json.flight ? json.flight.trim() : null;
         console.log("Creating new aircraft: %s (%s)", flight, id)
@@ -41,20 +44,22 @@ AFRAME.registerSystem('flight-pool', {
         aircraftEl.setAttribute('cursor-listener', {});
         // todo: Add label as component: aircraftEl.setAttribute('label', {});
         // aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
-        aircraftEl.addEventListener('data-updated', ev => this.updateLabel(ev));
+        aircraftEl.addEventListener('data-updated', ev => this.updateLabelCallback(ev));
 
-        this.el.appendChild(aircraftEl)
+        this.scene.appendChild(aircraftEl)
     },
 
-    updateAircraftElements: function (aircraftJson) {
+    /**
+     * Update state of all a-aircraft entities in flight pool or create new entities.
+     * 
+     * todo: Update ALL aircraft in the pool, even if not update came in from dump1090. Because each 
+     * aircraft must keep its seen and seen_pos attributes up-to date such that its stale and dead states can change
+     */
+    updatePoolCallback: function (aircraftJson) {
 
-        // todo: Update ALL aircraft in the pool, even if not update came in from dump1090. Because each 
-        // aircraft must keep its seen and seen_pos attributes up-to date such that its stale and dead states can change
-
-        // Update positions of known aircraft or create new a-aircraft entities from aircraft.json
         aircraftJson.aircraft.forEach((json) => {
-            // We need a valid hexid to uniquely identify the aircraft for later updates
-            const id = this.idFromHex(json.hex);
+            // We need a valid id to uniquely identify each aircraft for later updates
+            const id = this._idFromHex(json.hex);
             if (id === null) return
 
             var aircraftEl = this.el.querySelector(`#${id}`); // Check if aircraft element already exists
@@ -65,29 +70,54 @@ AFRAME.registerSystem('flight-pool', {
             }
         })
 
-        this.purge();  // Delete dead aircraft
+        this._purge();  // Delete dead aircraft
     },
 
-    purge: function () {
+    /**
+     * Remove all dead aircraft from the pool.
+     * 
+     * 'Dead' means the aircraft's 'seen_pos' is older than deadGracePeriod.
+     * 
+     * Problem: Some of the _createAircraftElement() calls in the forEach loop of updatePoolCallback()
+     * do not finish before purge() is called, such that a deletion is attempted on entities which do not fully exist yet 
+     * (they have an id, but no aircraft component is attached yet), so you get an
+     * "uncaught TypeError: aircraftEl.components.aircraft is undefined". That's why 
+     * check for aircraftEl.components.aircraft !== undefined
+     */
+    _purge: function () {
         const aircraftEls = this.el.querySelectorAll('a-aircraft');
 
         aircraftEls.forEach((aircraftEl) => {
-            if (aircraftEl.components.aircraft.seen_pos > this.DEAD_GRACE_PERIOD) {
-                this._destroyAircraft(aircraftEl);
+            if (aircraftEl.components.aircraft !== undefined) {
+                if (aircraftEl.components.aircraft.seen_pos > this.deadGracePeriod) {
+                    this._destroyAircraft(aircraftEl);
+                }
             }
         })
     },
 
-    // Create clean id string ("id_<hex>")
-    idFromHex: function (hex) {
+    /**
+     * Create clean aircraft id string from the aircraft hex number.
+     * 
+     * The id must start with a letter, so prepend 'id' to the numerical hex: id_<hex>.
+     * The MLAT flights start with a tilde, so remove it.
+     * (Maybe ignore MLAT flights completely, as their position is never transmitted by dump1090?)
+     */
+    _idFromHex: function (hex) {
         if (hex === null) return null
 
         const hexCleaned = hex.startsWith("~") ? hex.substring(2) : hex
         return `id_${hexCleaned}`
     },
 
-    updateLabel: function (ev) {
-        // todo: Add label as component to the aircraft element: aircraftEl.setAttribute('label', {});
+    /**
+     * Add and update label component to a-aircraft entity.
+     * 
+     * Note: The label should be managed from outside of the aircraft component, as it
+     * contains global information which the aircraft cannot be aware of
+     * (e.g. distance to camera, which is managed by my-gps-projected-entity-place component).
+     */
+    updateLabelCallback: function (ev) {
         var aircraftEl = ev.target;
         var aircraft = aircraftEl.components.aircraft;
         aircraftEl.setAttribute('label', {
@@ -97,9 +127,15 @@ AFRAME.registerSystem('flight-pool', {
         })
     },
 
+    /**
+     * Remove the provided a-aircraft entity from scene.
+     */
     _destroyAircraft: function (aircraftEl) {
-        this.el.removeChild(aircraftEl);  // remove from scene
-        aircraftEl.destroy();
-        console.log("Aircraft destroyed")
+        const id = aircraftEl.components.aircraft.id;
+        console.log("Deleting aircraft:" + id)
+
+        this.scene.removeChild(aircraftEl);  // remove from scene
+
+        console.log("Aircraft " + id + " destroyed")
     },
 });
