@@ -27,7 +27,7 @@ const SitePosition = null;
  * and NOT by updating through the schema.
  */
 AFRAME.registerComponent('aircraft', {
-    dependencies: ['my-gps-projected-entity-place', 'flight-path'],
+    // dependencies: ['my-gps-projected-entity-place', 'flight-path'],
 
     schema: {
         // Will be used as unique id of this entity
@@ -381,6 +381,8 @@ AFRAME.registerComponent('aircraft', {
 
     /**
     * Determine from current and previous time stamps and positions if airplance has moved.
+    * 
+    * todo: prev_position is not stored anywhere, use it for geometry orientation
     */
     moved: function () {
         if (!this.position)
