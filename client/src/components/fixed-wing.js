@@ -27,6 +27,8 @@ AFRAME.registerComponent('fixed-wing', {
 
                 self.orientation.copy(newPosition).sub(self.prevPosition).normalize();
                 self.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), self.orientation));
+
+                self.prevPosition = newPosition.clone();
             }
         });
     },
