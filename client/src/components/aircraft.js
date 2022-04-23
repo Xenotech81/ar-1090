@@ -329,11 +329,11 @@ AFRAME.registerComponent('aircraft', {
         this.updateMaterial();
         this.updateState();
 
-        // if (this.position) {
-        //     this.el.setAttribute('flight-path', {
-        //         newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
-        //     });
-        // }
+        if (this.position) {
+            this.el.setAttribute('flight-path', {
+                newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
+            });
+        }
     },
 
     /**

@@ -1,4 +1,5 @@
 import "./libs/my-gps-projected-entity-place"
+import "./libs/aframe-curve-component"
 import "./systems/world-scale"
 import "./systems/dump1090-client"
 import "./systems/flight-pool"

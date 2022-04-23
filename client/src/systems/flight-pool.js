@@ -43,6 +43,7 @@ AFRAME.registerSystem('flight-pool', {
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
         aircraftEl.setAttribute('fixed-wing', {});
+        aircraftEl.setAttribute('flight-path', {});
         // todo: Add label as component: aircraftEl.setAttribute('label', {});
         // aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
         aircraftEl.addEventListener('data-updated', ev => this.updateLabelCallback(ev));
