@@ -366,10 +366,17 @@ AFRAME.registerComponent('aircraft', {
     },
 
     /**
-    * Transform feet into meter; pay attention to 'ground' altitude
+    * Transform altitude from feet to meter, or return 'ground' string.
     */
     f2m(ft) {
         return ft === "ground" ? 0 : ft * 0.3048;
+    },
+
+    /**
+    * Return altitude in meter, by calling f2m().
+    */
+    getAltitude() {
+        return this.f2m(this.altitude);
     },
 
     /**

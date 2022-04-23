@@ -122,7 +122,7 @@ AFRAME.registerSystem('flight-pool', {
         var aircraft = aircraftEl.components.aircraft;
         aircraftEl.setAttribute('label', {
             flight: aircraft.flight,
-            altitude: aircraft.altitude,
+            altitude: aircraft.getAltitude(),
             distance: aircraftEl.getAttribute('distance')
         })
     },
