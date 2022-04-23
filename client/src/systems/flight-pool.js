@@ -16,7 +16,7 @@ AFRAME.registerSystem('flight-pool', {
     // dependencies: ['dump1090-client'], label
 
     schema: {
-        deadGracePeriod: { default: 60 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
+        deadGracePeriod: { default: 120 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
     },
 
     init: function () {
@@ -66,7 +66,9 @@ AFRAME.registerSystem('flight-pool', {
             if (aircraftEl) {
                 aircraftEl.components.aircraft.updateData(aircraftJson.now, json);
             } else {
-                this._createAircraftElement(id, json)
+                if (json.seen_pos < this.deadGracePeriod) {  // create new aircraft only if it is not dead
+                    this._createAircraftElement(id, json)
+                }
             }
         })
 
