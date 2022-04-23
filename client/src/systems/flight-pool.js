@@ -138,6 +138,7 @@ AFRAME.registerSystem('flight-pool', {
         console.log("Deleting aircraft:" + id)
 
         this.scene.removeChild(aircraftEl);  // remove from scene
+        aircraftEl.destroy();  // Clean up memory related to the entity such as clearing all components and their data.
 
         console.log("Aircraft " + id + " destroyed")
     },
