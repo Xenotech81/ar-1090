@@ -34,10 +34,10 @@ AFRAME.registerComponent('aircraft', {
         id: {
             default: ''
         },
-        lon: {
+        longitude: {
             default: 0,
         },
-        lat: {
+        latitude: {
             default: 0,
         },
         // Altitude in meters
@@ -53,6 +53,9 @@ AFRAME.registerComponent('aircraft', {
         this.STALE_TIMEOUT = 15;  // sec
         this.DEAD_TIMEOUT = 58;  // sec
         this.dead_since = 0;  // Age of last dead state declaration
+
+        this.latitude = null;
+        this.longitude = null;
 
         // Unique id of this aircraft entity
         this.id = this.data.id;
@@ -159,8 +162,7 @@ AFRAME.registerComponent('aircraft', {
 
     remove: function () {
         this.el.removeAttribute('my-gps-projected-entity-place')
-        this.el.removeAttribute('flight-path')
-        console.log("REMOVED")
+
     },
 
     /**
@@ -319,21 +321,20 @@ AFRAME.registerComponent('aircraft', {
         }
 
         if (this.position) {
+            // Let 'my-gps-projected-entity-place' set the aircraft world coordinates
             this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
+
+            this.latitude = this.position[1];
+            this.longitude = this.position[0];
+            this.el.emit('new-gps-position');
         }
 
         if (!this.el.is('dead')) {
-            this.el.dispatchEvent(new CustomEvent('data-updated'));
+            this.el.emit('data-updated');
         }
 
         this.updateMaterial();
         this.updateState();
-
-        if (this.position) {
-            this.el.setAttribute('flight-path', {
-                newGpsPosition: `${this.position[1]} ${this.position[0]} ${this.f2m(this.altitude)}`
-            });
-        }
     },
 
     /**
@@ -541,8 +542,8 @@ AFRAME.registerPrimitive('a-aircraft', extendDeep({}, meshMixin, {
 
     mappings: {
         'id': 'aircraft.id',
-        'lat': 'aircraft.lat',
-        'lon': 'aircraft.lon',
+        'latitude': 'aircraft.latitude',
+        'longitude': 'aircraft.longitude',
         'altitude': 'aircraft.altitude',
         'onground': 'aircraft.onground'
     }

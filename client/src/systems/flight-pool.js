@@ -16,7 +16,7 @@ AFRAME.registerSystem('flight-pool', {
     // dependencies: ['dump1090-client'], label
 
     schema: {
-        deadGracePeriod: { default: 60 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
+        deadGracePeriod: { default: 90 }  // sec, 'dead' state means the aircraft's 'seen_pos' is older than deadGracePeriod.
     },
 
     init: function () {
@@ -43,12 +43,14 @@ AFRAME.registerSystem('flight-pool', {
         aircraftEl.setAttribute('class', 'clickable');
         aircraftEl.setAttribute('cursor-listener', {});
         aircraftEl.setAttribute('fixed-wing', {});
-        aircraftEl.setAttribute('flight-path', {});
-        // todo: Add label as component: aircraftEl.setAttribute('label', {});
-        // aircraftEl.addEventListener('stateadded', ev => this.stateAddedListener(ev));
         aircraftEl.addEventListener('data-updated', ev => this.updateLabelCallback(ev));
-
         this.scene.appendChild(aircraftEl)
+
+        // Create a-flight-path entity, its flight-path component will listen to gps-position updates of aircraft component
+        let flightPathEl = document.createElement('a-flight-path');
+        flightPathEl.setAttribute('flight-path', { 'aircraft': `#${id}` });
+        flightPathEl.setAttribute('id', `${id}_fp`);
+        this.scene.appendChild(flightPathEl)
     },
 
     /**
@@ -136,8 +138,14 @@ AFRAME.registerSystem('flight-pool', {
      */
     _destroyAircraft: function (aircraftEl) {
         const id = aircraftEl.components.aircraft.id;
-        console.log("Deleting aircraft:" + id)
 
+        const flightPath = this.scene.querySelector(`#${id}_fp`);
+        if (flightPath !== null) {
+            this.scene.removeChild(flightPath);
+            flightPath.destroy();
+        }
+
+        console.log("Deleting aircraft:" + id)
         this.scene.removeChild(aircraftEl);  // remove from scene
         aircraftEl.destroy();  // Clean up memory related to the entity such as clearing all components and their data.
 

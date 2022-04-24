@@ -33,13 +33,18 @@ AFRAME.registerSystem('world-scale', {
         window.removeEventListener(this.applyDistanceScaling);
     },
 
+    /**
+     * Return world position vector scaled with distance scale.
+     */
+    scalePosition: function (vec3) {
+        return vec3.multiplyScalar(this.data.distanceScale);
+    },
+
     applyDistanceScaling: function (el) {
-        // Listener to scale down the x,y,z coordinates of entity 'el'
-        const pos = el.getAttribute('position');
+        // Callback to scale down the x,y,z position coordinates and size of entity 'el'
+        el.object3D.position = this.scalePosition(el.getAttribute('position'));
+
         const distance = el.getAttribute('distance');
-
-        el.object3D.position.set(pos.x * this.data.distanceScale, pos.y * this.data.distanceScale, pos.z * this.data.distanceScale);
-
         if (this.data.enlargeFarObjects && distance) {
             const scale = this._distanceDependentLinScale(distance) * this.data.objectScale * this.data.distanceScale;
             el.object3D.scale.set(scale, scale, scale);
