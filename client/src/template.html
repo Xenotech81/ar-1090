@@ -22,7 +22,9 @@
 
     <a-scene vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;"
         arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'
-        world-scale='distanceScale: 0.01; objectScale: 6; enlargeFarObjects: true' dump1090-client flight-pool>
+        world-scale='distanceScale: 0.01; objectScale: 6; enlargeFarObjects: true' dump1090-client='pollInterval: 2'
+        flight-pool>
+        <!-- background="color: black"> -->
 
         <a-assets>
             <a-mixin id="range-ring-mixin" material='color: teal; side: double; transparent: true; opacity: 0.5;'

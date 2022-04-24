@@ -1,4 +1,5 @@
-import ColorByAlt from '../libs/flightaware/styles';
+import { ColorByAlt, SpecialSquawks } from '../libs/flightaware/styles';
+
 
 var extendDeep = AFRAME.utils.extendDeep;
 
@@ -9,11 +10,6 @@ var meshMixin = AFRAME.primitives.getMeshMixin();
 // Constants overwrite
 const SitePosition = null;
 
-var SpecialSquawks = {
-    '7500': { cssClass: 'squawk7500', markerColor: 'rgb(255, 85, 85)', text: 'Aircraft Hijacking' },
-    '7600': { cssClass: 'squawk7600', markerColor: 'rgb(0, 255, 255)', text: 'Radio Failure' },
-    '7700': { cssClass: 'squawk7700', markerColor: 'rgb(255, 255, 0)', text: 'General Emergency' }
-};
 
 /**
  * aircraft component
@@ -25,23 +21,23 @@ var SpecialSquawks = {
  * to ranslat the GPS position to three.js world position.
  * 
  * Example use from HTML:
- * <a-aircraft flight='abc123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
+ * <a-aircraft id='id_123' lat=46.104 lon=-1.533 altitude=1000 onground=false material='color: red'>
  * 
- * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method, 
- * and NOT by updating through the schema.
+ * Note: When used with flight-pool system, flight-pool updates the component by calling its updateData() method
+ * with json data delivered by dump1090-client, and NOT by updating it through the schema.
  */
 AFRAME.registerComponent('aircraft', {
-    dependencies: ['my-gps-projected-entity-place'],
+    // dependencies: ['my-gps-projected-entity-place', 'flight-path'],
 
     schema: {
         // Will be used as unique id of this entity
         id: {
             default: ''
         },
-        lon: {
+        longitude: {
             default: 0,
         },
-        lat: {
+        latitude: {
             default: 0,
         },
         // Altitude in meters
@@ -54,6 +50,13 @@ AFRAME.registerComponent('aircraft', {
     },
 
     init: function () {
+        this.STALE_TIMEOUT = 15;  // sec
+        this.DEAD_TIMEOUT = 58;  // sec
+        this.dead_since = 0;  // Age of last dead state declaration
+
+        this.latitude = null;
+        this.longitude = null;
+
         // Unique id of this aircraft entity
         this.id = this.data.id;
 
@@ -157,6 +160,11 @@ AFRAME.registerComponent('aircraft', {
         this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.data.lat}; longitude: ${this.data.lon}; altitude: ${this.data.altitude}`);
     },
 
+    remove: function () {
+        this.el.removeAttribute('my-gps-projected-entity-place')
+
+    },
+
     /**
     * Return true if entity is filtered out from view, eg due to altitude filter.
     * 
@@ -220,6 +228,9 @@ AFRAME.registerComponent('aircraft', {
         this.rssi = data.rssi;
         this.last_message_timestamp = receiver_timestamp;
 
+        this.seen = data.seen;
+        this.seen_pos = data.seen_pos;
+
         // simple fields
         var fields = ["alt_baro", "alt_geom", "gs", "ias", "tas", "track",
             "track_rate", "mag_heading", "true_heading", "mach",
@@ -275,6 +286,8 @@ AFRAME.registerComponent('aircraft', {
         } else {
             this.altitude = null;
         }
+
+        // todo: Switch between onground and airborne states instead
         if (this.altitude === "ground") { this.el.addState('onground') }
 
         // Pick a selected altitude
@@ -308,25 +321,69 @@ AFRAME.registerComponent('aircraft', {
         }
 
         if (this.position) {
+            // Let 'my-gps-projected-entity-place' set the aircraft world coordinates
             this.el.setAttribute('my-gps-projected-entity-place', `latitude: ${this.position[1]}; longitude: ${this.position[0]}; altitude: ${this.f2m(this.altitude)}`);
+
+            this.latitude = this.position[1];
+            this.longitude = this.position[0];
+            this.el.emit('new-gps-position');
         }
 
-
-
         if (!this.el.is('dead')) {
-            this.el.dispatchEvent(new CustomEvent('data-updated'));
+            this.el.emit('data-updated');
+        }
+
+        this.updateMaterial();
+        this.updateState();
+    },
+
+    /**
+     * updateState
+     * 
+     * Add stale and dead state to this Aircraft element depending on the values of
+     * seen and seen_pos attributes.
+     * 
+     */
+    updateState() {
+
+        if (this.seen >= this.STALE_TIMEOUT && !this.el.is('stale')) {
+            // console.log("Adding stale state to " + this.flight + " seen: " + this.seen)
+            this.el.addState('stale');
+        } else if (this.seen < this.STALE_TIMEOUT && this.el.is('stale')) {
+            // console.log("Removing stale state from " + this.flight + " seen: " + this.seen)
+            this.el.removeState('stale');
+        }
+
+        // If no packet in over DEAD_TIMEOUT seconds, mark as dead and ready for removal.
+        if (this.seen_pos >= this.DEAD_TIMEOUT && !this.el.is('dead')) {
+            console.log("Adding dead state to " + this.flight + " seen_pos: " + this.seen_pos)
+            this.el.addState('dead');
+            this.dead_since = this.seen_pos;
+        } else if (this.seen_pos < this.DEAD_TIMEOUT && this.el.is('dead')) {
+            console.log("Removing dead state from " + this.flight + " seen_pos: " + this.seen_pos)
+            this.el.removeState('dead');
+            this.dead_since = this.seen_pos;
         }
     },
 
     /**
-    * Transform feet into meter; pay attention to 'ground' altitude
+    * Transform altitude from feet to meter, or return 'ground' string.
     */
     f2m(ft) {
         return ft === "ground" ? 0 : ft * 0.3048;
     },
 
     /**
+    * Return altitude in meter, by calling f2m().
+    */
+    getAltitude() {
+        return this.f2m(this.altitude);
+    },
+
+    /**
     * Determine from current and previous time stamps and positions if airplance has moved.
+    * 
+    * todo: prev_position is not stored anywhere, use it for geometry orientation
     */
     moved: function () {
         if (!this.position)
@@ -375,7 +432,7 @@ AFRAME.registerComponent('aircraft', {
         l = colorArr[2];
 
         // If we have not seen a recent position update, change color
-        if (this.seen_pos > 15) {
+        if (this.seen_pos > this.STALE_TIMEOUT) {
             h += ColorByAlt.stale.h;
             s += ColorByAlt.stale.s;
             l += ColorByAlt.stale.l;
@@ -479,14 +536,14 @@ AFRAME.registerComponent('aircraft', {
 AFRAME.registerPrimitive('a-aircraft', extendDeep({}, meshMixin, {
     defaultComponents: {
         aircraft: {},
-        // geometry: { primitive: 'aircraft', model: 'arrow' },
-        geometry: { primitive: 'sphere', radius: 15 },
+        geometry: { primitive: 'aircraft', model: 'arrow' },
+        //geometry: { primitive: 'sphere', radius: 15 },
     },
 
     mappings: {
         'id': 'aircraft.id',
-        'lat': 'aircraft.lat',
-        'lon': 'aircraft.lon',
+        'latitude': 'aircraft.latitude',
+        'longitude': 'aircraft.longitude',
         'altitude': 'aircraft.altitude',
         'onground': 'aircraft.onground'
     }

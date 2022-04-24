@@ -18,6 +18,12 @@
  * heavily distorted near the poles. Nonetheless they are a good approximation
  * for many areas of the world and appear not to cause unacceptable distortions
  * when used as the units for AR apps.
+ * 
+ * todo:
+ *  - Change this.el.dispatchEvent(new CustomEvent('gps-entity-place-update-position',...)
+ *      and window.dispatchEvent(new CustomEvent('gps-entity-place-update-position',...)
+ *      to simpler this.el.emit('gps-entity-place-update-position', ...)
+ *  - Rename detail: { component:... to detail: { el:
  */
 AFRAME.registerComponent('my-gps-projected-entity-place', {
     _cameraGps: null,

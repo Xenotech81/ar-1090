@@ -1,34 +1,35 @@
-// Flight dynamics of fixed-wind aircraft
+/**
+ * Flight dynamics of fixed-wind aircraft.
+ * 
+ * Computes the geometry orientation from newest and previous position vectors.
+ * Triggers on 'componentchanged' (position) event fired by aircraft entity.
+ */
 AFRAME.registerComponent('fixed-wing', {
-    //dependencies: ['flight-path'],
-
-    schema: {
-        onGround: { default: false },
-    },
-
-    _gpsTrack: null,
 
     init: function () {
-        // Closure to access fresh `this.data` from event handler context.
-        var self = this;
-        var data = this.data;
-        var el = this.el;  // Reference to the component's entity.
 
-        this._gpsTrack = el.components['flight-path']
+        var self = this; // Closure to access fresh `this.data` from event handler context.
 
-        // Set up initial state and variables
-        if (data.onGround) { el.addState('onGround') } else { el.addState('airborne') }
+        this.prevPosition = null;  // Vector3 instance of previous aircraft position
+        this.orientation = new THREE.Vector3(0, 0, -1);  // Normalized orientation vector of last path segment (initiate pointing north)
 
-        // State change listenders and handlers
-        el.addEventListener('stateadded', function (evt) {
-            if (evt.detail === 'onGround') {
-                entity.removeState('airborne');
-                console.log('Aircraft landed!');
-            } else if (evt.detail === 'airborne') {
-                entity.removeState('onGround');
-                console.log('Aircraft took off!');
+
+        // Rotate geometry according to aircraft new and past position vectors
+        this.el.addEventListener('componentchanged', function (evt) {
+            if (evt.detail.name === 'position') {
+                const newPosition = evt.target.getAttribute('position')
+
+                // If first ever position, then just store it and return
+                if (self.prevPosition === null) {
+                    self.prevPosition = newPosition.clone();
+                    return
+                }
+
+                self.orientation.copy(newPosition).sub(self.prevPosition).normalize();
+                self.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), self.orientation));
+
+                self.prevPosition = newPosition.clone();
             }
         });
-
     },
 });

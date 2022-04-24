@@ -1,3 +1,6 @@
+import { ColorByAlt, altitudeLines } from '../libs/flightaware/styles'
+
+
 /** Flight path history component
  *
  * based on the original gps-entity-place, modified by Xenotech81 17/02/22
@@ -7,16 +10,13 @@
  * for many areas of the world and appear not to cause unacceptable distortions
  * when used as the units for AR apps.
  * 
- * TODO: Update worldPath if camera position changes
+ * todo: 
+ * - update worldPositions if camera position changes
  */
 AFRAME.registerComponent('flight-path', {
-    dependencies: ['my-gps-projected-entity-place'],
 
     schema: {
-        newGpsPosition: {
-            type: 'vec3',
-        },
-        linewidth: { default: 1 },
+        aircraft: { type: 'selector' },
         // Provide coordinates as string array with space separated values: 'lat lon alt lat lon alt ...' 
         initialFlightPath: {
             default: '',
@@ -36,98 +36,122 @@ AFRAME.registerComponent('flight-path', {
         }
     },
 
-    _cameraGps: null,  // We will need some methods from the camera
-    gpsPath: [], // Coordinates along flight path as vec3 of lat, lon, altitude[m ASL], ordered oldest to newest
-    worldPath: [], // Same as gpsPath, but in world coordinates
-    orientation: new THREE.Vector3(0, 0, -1),  // Normalized orientation vector of newest path segment
-
     init: function () {
-        // Grab camera from gps-projected-entity-place, as it will be always initialized
-        this._cameraGps = this.el.components['my-gps-projected-entity-place']._cameraGps;
+        console.log("Initializing flight path for: %s", this.data.aircraft.id)
+        this.gpsPositions = this.data.initialFlightPath; // Coordinates along flight path as vec3 of lat, lon, altitude[m ASL], ordered oldest to newest
+        this.worldPositions = []; // Same as gpsPositions, but in world coordinates (attention: Will need update on gps-camera-update-position)
+        this.colors = [];
 
-        this.gpsPath = this.data.initialFlightPath;
+        // Reference to world-scale system to apply scaling of position coordinates later
+        this.worldScale = document.querySelector('a-scene').systems['world-scale'];
+        // Grab camera from gps-projected-entity-place of aircraft, as it will be always initialized
+        this._cameraGps = this.data.aircraft.components['my-gps-projected-entity-place']._cameraGps;
 
-        const fligthId = this.el.getAttribute('id')
-        let curve = document.createElement('a-curve');
-        this.curveId = `${fligthId}_curve`;
-        curve.setAttribute('id', this.curveId)
-        this.el.sceneEl.appendChild(curve);
-
-        let drawCurve = document.createElement('a-draw-curve');
-        this.drawCurveId = `${fligthId}_draw-curve`;
-        drawCurve.setAttribute('id', this.drawCurveId)
-        drawCurve.setAttribute('curveref', `#${this.curveId}`)
-        drawCurve.setAttribute('material', { shader: 'line', color: ColorByAlt.unknown, linewidth: this.data.linewidth })
-        this.el.sceneEl.appendChild(drawCurve);
+        // Register listeners
+        this.data.aircraft.addEventListener('new-gps-position', this.update.bind(this));
     },
 
-    update: function (oldData) {
-        // Note: update will not be called if same vector is provided twice in a row as newGpsPosition
+    update: function () {
+        const aircraft = this.data.aircraft.components.aircraft;
 
-        const newGpsPosition = this.data.newGpsPosition;
+        const newGpsPosition = {
+            x: aircraft.latitude,
+            y: aircraft.longitude,
+            z: aircraft.getAltitude(),
+        }
 
         // On initialization, my-gps-projected-entity-place pushes lat/lon=(0,0) and altitude=Nan -> Do not save this
-        if (newGpsPosition && newGpsPosition.x != 0 && newGpsPosition.y != 0 && !isNaN(newGpsPosition.z)) {
-            this.gpsPath.push(new THREE.Vector3(newGpsPosition.x, newGpsPosition.y, newGpsPosition.z));
+        if (newGpsPosition && newGpsPosition.x != null && newGpsPosition.y != null && !isNaN(newGpsPosition.z)) {
+            const lat = newGpsPosition.x;
+            const lon = newGpsPosition.y;
+            const alt = newGpsPosition.z;  // m
+
+            let gpsVec = new THREE.Vector3(lat, lon, alt);
+            this.gpsPositions.push(gpsVec);
+
+            var worldPosition = this._gps2world(gpsVec)
+
+            if (this.worldScale) {
+                worldPosition = this.worldScale.scalePosition(worldPosition);
+            }
+
+            this.worldPositions.push(worldPosition)
+
+            // Colors
+            // https://github.com/mrdoob/three.js/blob/master/examples/webgl_lines_colors.html
+            const color = new THREE.Color();
+            const [h, s, l] = aircraft.getAltitudeColor();
+            color.setHSL(h / 360, s / 100, l / 100);
+            this.colors.push(color.r, color.g, color.b);
+
+            if (this.worldPositions.length <= 1) {
+                return
+            }
+            else {
+                // https://threejs.org/docs/index.html?q=CatmullRomCurve3#api/en/extras/curves/CatmullRomCurve3
+                // Note: CatmullRomCurve creates interpolated points, such that the number of points does not
+                // match number of colors any more! Coulors would need to be interpolated too...
+                //
+                // const spline = new THREE.CatmullRomCurve3(this.worldPositions);
+                // const points = spline.getPoints(this.worldPositions.length * 5);
+                const points = this.worldPositions;
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(this.colors, 3));
+                const material = new THREE.LineBasicMaterial({ color: 0xffffff, vertexColors: true });
+                this.el.setObject3D('mesh', new THREE.Line(geometry, material));
+            }
         }
-        else return
-
-        this._gpsToWorldPath();
-        this.updateEntityPosition();
-        this._updateEntityOrientation();
-        this._addCurvePoint();
-
-        this._setCurveColor(this._newestGpsPathPosition().alt / 0.3048);
     },
 
-    updateEntityPosition: function () {
-        var el = this.el;
-        const gps = this._newestGpsPathPosition();
-
-        // Let gps-projected-entity-place handle the position update; it has side effects
-        el.setAttribute('my-gps-projected-entity-place', `latitude: ${gps.lat}; longitude: ${gps.lon}; altitude: ${gps.alt}`);
+    remove: function () {
+        this.data.aircraft.removeEventListener('new-gps-position', this.update.bind(this));
+        console.log("Flight-path for %s removed", this.data.aircraft.id)
     },
 
-    _updateEntityOrientation: function () {
-        // Derive orientation vector in world coordinates from latest lat/lon positions of gps track
-        if (this.worldPath.length < 2) { return }  // min 2 positions needed
-
-        var oldWorldPos = this.worldPath[this.worldPath.length - 2];
-        var newWorldPos = this.worldPath[this.worldPath.length - 1];
-
-        // Assume that geometry was originally pointing north: THREE.Vector3(0, 0, -1)
-        this.orientation.copy(newWorldPos).sub(oldWorldPos).normalize();
-        this.el.object3D.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), this.orientation));
-    },
-
-    _addCurvePoint() {
-        let curve = document.querySelector(`#${this.curveId}`);
-        let newestCurvePoint = document.createElement('a-curve-point');
-
-        newestWorldPathPosition = this._newestWorldPathPosition();
-        newestCurvePoint.setAttribute('position', { x: newestWorldPathPosition.x / 100, y: newestWorldPathPosition.y / 100, z: newestWorldPathPosition.z / 100 });
-        curve.appendChild(newestCurvePoint);
+    /**
+    * Transform feet into meter; pay attention to 'ground' altitude
+    */
+    f2m(ft) {
+        return ft === "ground" ? 0 : ft * 0.3048;
     },
 
     _setCurveColor(altitudeFt) {
         // drawCurve.setAttribute('material', { color: altitudeLines(altitudeFt) });
-        let drawCurve = document.querySelector(`#${this.drawCurveId}`);
-        drawCurve.components.material.material.color = new THREE.Color(altitudeLines(altitudeFt));
+
+        // For color gradients see: https://stackoverflow.com/questions/26790345/vertex-colors-in-three-line
+        this.drawCurve.components.material.material.color = new THREE.Color(altitudeLines(altitudeFt));
     },
 
-    _gpsToWorldPath: function () {
-        this.worldPath = this.gpsPath.map(gpsVec => {
-            const alt = gpsVec.z;
-            const [x, z] = this._cameraGps.latLonToWorld(gpsVec.x, gpsVec.y);
-            return new THREE.Vector3(x, alt, z);
-        });
+    /** Transform from GPS to world coordinates by calling the GpsCamera latLonToWorld() method.
+     * Attention: The resulting world coordinates are NOT scaled down yet! Use world-scale system for this.
+    */
+    _gps2world: function (gpsVec) {
+        const alt = gpsVec.z;
+        const [x, z] = this._cameraGps.latLonToWorld(gpsVec.x, gpsVec.y);
+        return new THREE.Vector3(x, alt, z);
+    },
+
+    _reprojectWorldPath: function () {
+        this.worldPositions = this.gpsPositions.map(gpsVec => _gps2world(gpsVec));
     },
 
     _newestGpsPathPosition: function () {
-        return { lat: this.gpsPath[this.gpsPath.length - 1].x, lon: this.gpsPath[this.gpsPath.length - 1].y, alt: this.gpsPath[this.gpsPath.length - 1].z }
+        return { lat: this.gpsPositions[this.gpsPositions.length - 1].x, lon: this.gpsPositions[this.gpsPositions.length - 1].y, alt: this.gpsPositions[this.gpsPositions.length - 1].z }
     },
 
     _newestWorldPathPosition: function () {
-        return { x: this.worldPath[this.worldPath.length - 1].x, y: this.worldPath[this.worldPath.length - 1].y, z: this.worldPath[this.worldPath.length - 1].z }
+        return { x: this.worldPositions[this.worldPositions.length - 1].x, y: this.worldPositions[this.worldPositions.length - 1].y, z: this.worldPositions[this.worldPositions.length - 1].z }
+    }
+});
+
+/**
+ * <a-flight-path>
+ */
+AFRAME.registerPrimitive('a-flight-path', {
+    defaultComponents: {
+        'flight-path': {},
+        mappings: {
+            'aircraftref': 'flight-path.aircraft',
+        }
     }
 });
