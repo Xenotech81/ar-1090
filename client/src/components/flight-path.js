@@ -40,6 +40,7 @@ AFRAME.registerComponent('flight-path', {
         console.log("Initializing flight path for: %s", this.data.aircraft.id)
         this.gpsPositions = this.data.initialFlightPath; // Coordinates along flight path as vec3 of lat, lon, altitude[m ASL], ordered oldest to newest
         this.worldPositions = []; // Same as gpsPositions, but in world coordinates (attention: Will need update on gps-camera-update-position)
+        this.colors = [];
 
         // Reference to world-scale system to apply scaling of position coordinates later
         this.worldScale = document.querySelector('a-scene').systems['world-scale'];
@@ -76,19 +77,30 @@ AFRAME.registerComponent('flight-path', {
 
             this.worldPositions.push(worldPosition)
 
+            // Colors
+            // https://github.com/mrdoob/three.js/blob/master/examples/webgl_lines_colors.html
+            const color = new THREE.Color();
+            const [h, s, l] = aircraft.getAltitudeColor();
+            color.setHSL(h / 360, s / 100, l / 100);
+            this.colors.push(color.r, color.g, color.b);
+
             if (this.worldPositions.length <= 1) {
                 return
             }
-
-            // https://threejs.org/docs/index.html?q=CatmullRomCurve3#api/en/extras/curves/CatmullRomCurve3
-            const spline = new THREE.CatmullRomCurve3(this.worldPositions);
-            const points = spline.getPoints(this.worldPositions.length * 5);
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
-
-            this.el.setObject3D('mesh', new THREE.Line(geometry, material));
+            else {
+                // https://threejs.org/docs/index.html?q=CatmullRomCurve3#api/en/extras/curves/CatmullRomCurve3
+                // Note: CatmullRomCurve creates interpolated points, such that the number of points does not
+                // match number of colors any more! Coulors would need to be interpolated too...
+                //
+                // const spline = new THREE.CatmullRomCurve3(this.worldPositions);
+                // const points = spline.getPoints(this.worldPositions.length * 5);
+                const points = this.worldPositions;
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(this.colors, 3));
+                const material = new THREE.LineBasicMaterial({ color: 0xffffff, vertexColors: true });
+                this.el.setObject3D('mesh', new THREE.Line(geometry, material));
+            }
         }
-        else return
     },
 
     remove: function () {
